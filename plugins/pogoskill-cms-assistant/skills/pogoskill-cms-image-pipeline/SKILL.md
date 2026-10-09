@@ -25,7 +25,7 @@ description: 为 PoGoskill 文章提取真实 JPG/PNG、生成同名 WebP、成�
 2. 用 `extract-docx-images.ps1` 按 `document.xml` 的图片关系顺序提取正文实际引用的 JPG/PNG，不盲目复制 `word/media`。每次引用都是独立 occurrence；同一媒体文件被引用两次就必须有两个 manifest 项。遇到不支持、损坏或无法处理的源图时保留记录并停止，禁止从 manifest 静默删除后继续。
 3. 为每张图确定用途、所在段落和目标目录：Pokémon GO 游戏图用 `pokemon-ios`，Pikmin Bloom 游戏图用 `pikmin`，PoGoskill 下载/安装/步骤/产品界面用 `guides`。
 4. 人工或语义映射补齐每张图的 `image_key`、符合文章语言的 `alt`、语义化 basename、`max_width` 和展示类型。手机截图标记 `display_mode = phone-screenshot`，可补充 `max_height`。不得把 DOCX 的 `descr` 自动当作最终 ALT，也不得给 basename 追加随机字符串或 SHA 哈希。
-   - DOCX／参考样式明确要求并排双图时，两项都标记同一个 `pair_key`、各自 `pair_order = 1/2`、`display_mode = paired` 和非空 `caption`。横图 `max_width` 不超过 400；竖图仍使用 `max_height`。不得改变左右顺序或为了并排裁切图片。
+   - DOCX 明确要求并排双图时，两项都标记同一个 `pair_key`、各自 `pair_order = 1/2`、`display_mode = paired` 和非空 `caption`。横图 `max_width` 不超过 400；竖图仍使用 `max_height`。不得改变左右顺序或为了并排裁切图片。
 5. 主图先处理为 850×460；其他图片保持比例，横图不超过正文需求。竖图和手机截图必须以 `max-height` 为主要限制并保持 `width:auto;height:auto`，英文手机截图不得用固定像素 `max-width` 放大铺满正文。随后用 `convert-image-pairs.ps1` 保留 JPG/PNG 并生成同 basename WebP。
 6. 上传前用 `/cms/picture/list` 检查目标文件名与完全重复项。若目标目录已经存在同名、同尺寸的 fallback/WebP 对，直接复用并回填，不得再次上传。只有缺少该图片对时才上传；上传后必须验证 `code === 0`、`total === 2`、`err_name_files` 为空、两者尺寸一致，并回查列表。
    `cms-upload-image-pairs.ps1 -Execute` 必须由当前工具会话直接运行；若返回运行会话 ID，持续轮询同一会话直到明确退出，禁止启动后不等待、转到浏览器或用“交互阶段”代替结果。脚本会在开始、每张图片完成和失败时立即写回 manifest，并把每次 `/picture/upload` 原始响应保存到文章目录的 `cms-evidence`。缺少最终汇总时先检查这些断点证据和 `/picture/list`，不得直接判定未执行或再次上传。

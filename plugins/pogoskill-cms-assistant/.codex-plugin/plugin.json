@@ -1,22 +1,25 @@
 {
   "name": "pogoskill-cms-assistant",
-  "version": "1.0.0",
-  "description": "PoGoskill 繁中与英文站专用 CMS 文章助手；保留固定 V2 HTML、双格式图片、草稿回读与审查流程，不包含其他站点规范学习。",
+  "version": "1.0.0+codex.20261009075414",
+  "description": "PoGoskill \u7e41\u4e2d\u4e0e\u82f1\u6587\u7ad9\u4e13\u7528 CMS \u6587\u7ae0\u52a9\u624b\uff1b\u4fdd\u7559\u56fa\u5b9a V2 HTML\u3001\u53cc\u683c\u5f0f\u56fe\u7247\u3001\u8349\u7a3f\u56de\u8bfb\u4e0e\u5ba1\u67e5\u6d41\u7a0b\uff0c\u4e0d\u5305\u542b\u5176\u4ed6\u7ad9\u70b9\u89c4\u8303\u5b66\u4e60\u3002",
   "author": {
     "name": "PoGoskill Team"
   },
   "skills": "./skills/",
   "interface": {
-    "displayName": "PoGoskill CMS 文章助手",
-    "shortDescription": "PoGoskill 繁中／英文 V2 文章转写与 CMS 草稿上传。",
-    "longDescription": "只处理 PoGoskill 台湾站和英文站文章。复用已验证的 HTML、图片、下载区和 Buy Box 规则，完成 CMS 草稿写入与回读，不生成或发布文章页面。",
+    "displayName": "PoGoskill CMS \u6587\u7ae0\u52a9\u624b",
+    "shortDescription": "PoGoskill \u7e41\u4e2d\uff0f\u82f1\u6587 V2 \u6587\u7ae0\u8f6c\u5199\u4e0e CMS \u8349\u7a3f\u4e0a\u4f20\u3002",
+    "longDescription": "\u53ea\u5904\u7406 PoGoskill \u53f0\u6e7e\u7ad9\u548c\u82f1\u6587\u7ad9\u6587\u7ae0\u3002\u590d\u7528\u5df2\u9a8c\u8bc1\u7684 HTML\u3001\u56fe\u7247\u3001\u4e0b\u8f7d\u533a\u548c Buy Box \u89c4\u5219\uff0c\u5b8c\u6210 CMS \u8349\u7a3f\u5199\u5165\u4e0e\u56de\u8bfb\uff0c\u4e0d\u751f\u6210\u6216\u53d1\u5e03\u6587\u7ae0\u9875\u9762\u3002",
     "developerName": "PoGoskill Team",
     "category": "Productivity",
-    "capabilities": ["Read", "Write"],
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
     "defaultPrompt": [
-      "使用 $pogoskill-cms-article-assistant 处理这篇 PoGoskill 繁中 DOCX；完整保留正文与图片，按台湾站 V2 规范保存并回读 CMS 草稿，不生成或发布文章页面。",
-      "使用 $pogoskill-cms-en-publisher 处理这篇 PoGoskill 英文 DOCX；用中文汇报，按英文站 V2 规范保存并回读 CMS 草稿，不生成或发布文章页面。",
-      "请按本仓库 START-HERE.md 为我安装并检查 PoGoskill CMS 文章助手。先检查已存 CMS Key，有效时不要再次索取。"
+      "\u4f7f\u7528 $pogoskill-cms-article-assistant \u5904\u7406\u8fd9\u7bc7 PoGoskill \u7e41\u4e2d DOCX\uff1b\u5b8c\u6574\u4fdd\u7559\u6b63\u6587\u4e0e\u56fe\u7247\uff0c\u6309\u53f0\u6e7e\u7ad9 V2 \u89c4\u8303\u4fdd\u5b58\u5e76\u56de\u8bfb CMS \u8349\u7a3f\uff0c\u4e0d\u751f\u6210\u6216\u53d1\u5e03\u6587\u7ae0\u9875\u9762\u3002",
+      "\u4f7f\u7528 $pogoskill-cms-en-publisher \u5904\u7406\u8fd9\u7bc7 PoGoskill \u82f1\u6587 DOCX\uff1b\u7528\u4e2d\u6587\u6c47\u62a5\uff0c\u6309\u82f1\u6587\u7ad9 V2 \u89c4\u8303\u4fdd\u5b58\u5e76\u56de\u8bfb CMS \u8349\u7a3f\uff0c\u4e0d\u751f\u6210\u6216\u53d1\u5e03\u6587\u7ae0\u9875\u9762\u3002",
+      "\u8bf7\u6309\u672c\u4ed3\u5e93 START-HERE.md \u4e3a\u6211\u5b89\u88c5\u5e76\u68c0\u67e5 PoGoskill CMS \u6587\u7ae0\u52a9\u624b\u3002\u5148\u68c0\u67e5\u5df2\u5b58 CMS Key\uff0c\u6709\u6548\u65f6\u4e0d\u8981\u518d\u6b21\u7d22\u53d6\u3002"
     ]
   }
 }

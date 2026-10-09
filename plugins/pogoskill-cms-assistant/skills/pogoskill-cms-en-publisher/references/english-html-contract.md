@@ -1,8 +1,8 @@
 # English V2 HTML contract
 
-## 0. Required source package
+## 0. Built-in fixed contract and source input
 
-Before writing HTML, record at least one layout reference supplied in the DOCX: a reference article URL, CMS page ID, or existing HTML. Load the referenced CMS HTML when a URL or page ID is supplied, then reuse only its approved V2 module structure. Do not invent a layout when no reference is present.
+This contract and the packaged component assets already define the English PoGoskill V2 layout. Convert a new DOCX directly from these fixed rules; an old article URL, CMS page ID, CSS, or HTML is not required and its absence is not a reason to stop. If the user voluntarily supplies an old article, use it only to clarify an unusual layout; this contract and the assets remain authoritative.
 
 Images that need a new CMS upload must be embedded in the DOCX exactly where they belong; their surrounding paragraphs define placement. Guide images are different: the DOCX must state the exact CMS `guides` filename, including extension, at the corresponding step or paragraph. Reuse only the exact-name fallback/WebP pair. Do not infer a screenshot from the prose, substitute a similar image, or upload a new Guide image.
 
@@ -15,7 +15,7 @@ This contract is derived from three supplied English production examples and nor
 - Do not add `<style>`, article-specific wrapper classes, custom cards, colored notice boxes or new visual components.
 - Keep HTML readable with one logical tag per line and consistent indentation. Never compress the article into one line.
 - Preserve the complete source article. Do not omit late sections, tables, FAQ, conclusion, images, download CTA or Buy Box.
-- Every class must already exist in the supplied English examples or an English reference page selected through CMS.
+- Every class must already exist in this contract or the packaged English assets; do not invent a class by consulting a new article.
 
 ## Canonical order
 
@@ -54,13 +54,13 @@ Do not add a TOC entry for a section that does not have a matching ID. Do not le
 
 - H2: major article parts, FAQ and Conclusion.
 - H3: genuine subtopics only. Approved observed variants are `h3-triangle`, `h3-orange-local`, `h3-red-local`, `h3-num`, and `h3-faq faq1`.
-- H4: only a real subsection nested beneath an H3/H2 when the selected English reference already uses `h4-filled` for the same content role.
+- H4: only a real subsection nested beneath an H3/H2 when this contract permits `h4-filled` for that content role.
 - Never use headings merely to enlarge text. Never place consecutive headings without explanatory content.
 - Individual operation steps are list items, not separate H3 headings.
 
 ## Lists, tables and links
 
-- Use an observed `list-cont` variant such as `list-star`, `list-lamp`, `list-angle`, `list-flag`, `list-primary-dot` or `list-white-dot` only when its semantic role matches the reference.
+- Use a documented `list-cont` variant such as `list-star`, `list-lamp`, `list-angle`, `list-flag`, `list-primary-dot` or `list-white-dot` only when its semantic role matches the content.
 - Every `<li>` must remain inside its owning `<ul>` or `<ol>`. Images belonging to a step stay inside that `<li>` after its paragraph; never place a `<div>` directly between list items.
 - English V2 bordered tables are not native `<table>` elements. They must preserve the verified template hierarchy `div.table-cont > div.table-list.table3/table4 > ul > li`. The `table-cont`, `table-list` and `table3`/`table4` classes render the existing borders and cell layout; removing them produces the broken borderless result.
 - Ordinary comparison tables start from `assets/responsive-table.html`. Keep `.table-cont` and `.table-list.table4`, and center only the inner `.table-list` with `width:90%;max-width:100%;margin:0 auto;`. Adjust the percentage only within 70%-100% when content requires it.
@@ -100,7 +100,7 @@ Before image publication, a correct public URL can return HTTP 404. This is an i
 
 ### Paired images with descriptions
 
-Use this module only when the DOCX or reference article clearly treats two images as one side-by-side comparison or step box. Copy `assets/paired-image-box.html` and replace its placeholders; do not invent another grid or custom CSS.
+Use this module only when the DOCX clearly treats two images as one side-by-side comparison or step box. Copy `assets/paired-image-box.html` and replace its placeholders; do not invent another grid or custom CSS.
 
 - Keep `div.row.justify-content-center[data-image-layout="pair"]` with exactly two `div.col-12.col-md-6.text-center.mb-3` children. This keeps the images side by side on desktop and stacks them on narrow screens.
 - Each child must contain one complete `img-wrap > picture > source + img` followed immediately by a non-empty `<p class="text-center">description</p>`.
@@ -116,11 +116,11 @@ Do not combine two unrelated adjacent images into this module merely to make the
 
 - The first mention of PoGoskill in its recommendation section links to `https://www.pogoskill.com/`.
 - Explain what PoGoskill does and why it solves the article's problem before showing download buttons.
-- Use the reference site's existing feature heading/list. Do not create a custom feature card.
+- Use the packaged English contract's existing feature heading/list. Do not create a custom feature card.
 - Insert `assets/download-cta.html` exactly once in the main recommendation block. Keep it in the established position after the `How to Use PoGoskill` heading and immediately before the `step-cont` list.
 - The download CTA must retain both desktop secure-download boxes and the mobile Buy Now links. Do not remove wrappers, SVG references or button classes.
 - The desktop `.btn-groups` must retain `style="display:flex;justify-content:center;"` so both download buttons stay centered regardless of the approved H3/H4 heading variant above them.
-- Place one clear existing-style operation heading before the CTA/steps grouping. English reference pages may use an approved H3 such as `<h3 class="h3-triangle">How to Reset &amp; Modify GPS Coordinates Smoothly via PoGoskill?</h3>` or `<h3 class="h3-orange-local">How to Use PoGoskill</h3>`, and may also use `<h4 class="h4-filled">How to Use PoGoskill</h4>`. Preserve the appropriate verified variant instead of forcing every article to H4. Do not translate it or turn each individual step into a heading.
+- Place one clear existing-style operation heading before the CTA/steps grouping. This contract permits an approved H3 such as `<h3 class="h3-triangle">How to Reset &amp; Modify GPS Coordinates Smoothly via PoGoskill?</h3>` or `<h3 class="h3-orange-local">How to Use PoGoskill</h3>`, and also permits `<h4 class="h4-filled">How to Use PoGoskill</h4>` where the content hierarchy calls for it. Select the appropriate packaged variant instead of forcing every article to H4. Do not translate it or turn each individual step into a heading.
 - Each step uses this stable structure:
 
 ```html

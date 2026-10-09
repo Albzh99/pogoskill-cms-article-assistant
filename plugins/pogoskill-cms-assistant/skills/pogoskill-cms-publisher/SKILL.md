@@ -9,11 +9,11 @@ description: 将 PoGoskill 台湾站 SEO 文稿转换为文章内容页面模板
 
 ## 输入契约
 
-- DOCX 必须提供参考文章 URL、CMS 页面 ID 或现有 HTML中的至少一项。先读取并记录参考来源，再复用其现有结构；没有参考样式时不得自行设计新模块。
+- 直接使用本技能内置的 Luna HTML 固定执行契约、结构参考结论、资产和校验器。DOCX 不必提供旧文章 URL、CMS 页面 ID、CSS 或 HTML；用户主动提供的旧文仅用于辅助判断特殊版式，不得覆盖包内规范。
 - 需要上传的普通正文图必须直接嵌入 DOCX 的实际出现位置。只给路径、文件夹或无位置说明的附件不能用于自动回填。
 - Guide 图无需嵌入；DOCX 必须在对应步骤或段落写出 CMS `guides` 中的准确文件名（含扩展名）。只按该名称精确检索并复用，不按语义猜图、不换相似图、不重新上传 Guide 图。
 
-开始前读取总助手的 [CMS 真实执行与证据契约](../pogoskill-cms-article-assistant/references/execution-contract.md)、[references/cms-live-contract.md](references/cms-live-contract.md) 和 [references/cms-api-contract.md](references/cms-api-contract.md)。制作或修改正文 HTML 时，必须先完整读取 [Luna HTML 固定执行契约](references/luna-html-contract.md) 和 [两篇旧文章的结构参考结论](references/legacy-article-patterns.md)，逐模块复制当前 V2 结构；单图位置使用 [assets/image-box.html](assets/image-box.html)，源稿／参考样式明确要求并排双图时使用 [assets/paired-image-box.html](assets/paired-image-box.html)，普通表格使用 [assets/responsive-table.html](assets/responsive-table.html)，确实过宽的表格才使用 [assets/wide-table.html](assets/wide-table.html)，正文下载区原样使用 [assets/download-cta.html](assets/download-cta.html)，正文结尾原样使用 [assets/buybox.html](assets/buybox.html)。不得靠记忆重写图片、表格、下载区或 Buy Box，也不得复制旧文章的自定义 CSS 或专属 class。
+开始前读取总助手的 [CMS 真实执行与证据契约](../pogoskill-cms-article-assistant/references/execution-contract.md)、[references/cms-live-contract.md](references/cms-live-contract.md) 和 [references/cms-api-contract.md](references/cms-api-contract.md)。制作或修改正文 HTML 时，必须先完整读取 [Luna HTML 固定执行契约](references/luna-html-contract.md) 和 [两篇旧文章的结构参考结论](references/legacy-article-patterns.md)，逐模块复制当前 V2 结构；单图位置使用 [assets/image-box.html](assets/image-box.html)，源稿明确要求并排双图时使用 [assets/paired-image-box.html](assets/paired-image-box.html)，普通表格使用 [assets/responsive-table.html](assets/responsive-table.html)，确实过宽的表格才使用 [assets/wide-table.html](assets/wide-table.html)，正文下载区原样使用 [assets/download-cta.html](assets/download-cta.html)，正文结尾原样使用 [assets/buybox.html](assets/buybox.html)。不得靠记忆重写图片、表格、下载区或 Buy Box，也不得复制旧文章的自定义 CSS 或专属 class。
 
 ## 授权和安全
 
@@ -30,7 +30,7 @@ description: 将 PoGoskill 台湾站 SEO 文稿转换为文章内容页面模板
 2. 用页面列表按 URL 与标题查重；命中时选择更新，不重复创建。
 3. 查询文章 V2 模板及其自定义字段。
 4. 查询并确认作者、分类页、产品和相关文章；相关文章必须存在且属于正确站点。产品必须通过 `/cms/product/list` 与 `/cms/product/info` 实时核验，并严格写成 `"product_id": ["6333", "6332"]`，即 PoGoskill/Windows 与 PoGoskill(Mac)/Mac；`7925`、`7926` 是下载 PID，不得写进 `product_id`。
-5. 读取同类近期已发布文章，选择符合当前站点的 HTML 组件。
+5. 使用本包固定的台湾站 V2 HTML 组件；无需每篇重新读取已发布文章学习版式。只有内置规范未覆盖特殊内容时，才可只读核对同站现有文章，并报告判断依据。
 
 任何关键字段无法确认时，停止在 CMS 写入前并报告缺失项。
 
@@ -41,11 +41,11 @@ description: 将 PoGoskill 台湾站 SEO 文稿转换为文章内容页面模板
 - 输出按标签和逻辑区块换行、缩进，确保人工可读；禁止把 HTML 压成一整行。
 - 保持正确 heading hierarchy，使用带稳定 `id` 的 `<section>` 与目录锚点。
 - 写 HTML 前先列出章节大纲：每个 H2 对应一个目录项；H3 只用于真正的子主题，且后面必须有完整段落、列表或表格。禁止连续 H3、把单个步骤做成 H3，或为了视觉效果拆出大量小标题。
-- 参考模板文章 `240801` 学习可用组件，并优先读取同分类近期已上线文章作为实际结构基准。只复用基准中确实存在且适合当前内容的目录、列表、表格、步骤、图片、视频、FAQ、下载模块和产品模块。
+- 模板文章 `240801` 及同类旧文的结构结论已整理进本包 `references/legacy-article-patterns.md`。直接按固定契约选择适合当前内容的目录、列表、表格、步骤、图片、视频、FAQ、下载模块和产品模块，不要求再次读取旧文。
 - 禁止自行新增文本框、提示框、卡片、彩色背景框、引用框、CSS class、内联/页面 CSS 或新的 HTML 层级；不得因为内容重要或希望页面更丰富而创造视觉模块。
-- 保持所选参考文章的标题、正文、段落间距、按钮、下载框架及模块结构；内容无法自然放入现有组件时，使用普通段落、H2/H3、列表或表格，或停止并报告模板缺口。
+- 保持包内固定契约与资产规定的标题、正文、段落间距、按钮、下载框架及模块结构；内容无法自然放入现有组件时，使用普通段落、H2/H3、列表或表格，或停止并报告模板缺口。
 - 普通表格复制 `assets/responsive-table.html`，按内容使用合理宽度并居中，默认约为正文的 90%，不强制铺满正文，也不启用横向滚动。只有实际内容过长、在正文宽度内必然明显挤压时才复制 `assets/wide-table.html`，标记 `data-table-layout="wide"` 并在移动端横向滚动；列数本身不构成启用滚动的理由。两类表格都使用自动列宽、居中文字，禁止固定窄列。图片使用站点现有 `picture`、lazy-load 与 `img-wrap` 规则。
-- 当源 DOCX 或参考文章明确显示两图并排且图下有说明时，保留左右顺序并套用 `assets/paired-image-box.html`。必须恰好两个 `col-12 col-md-6` 子项，每项含完整 WebP/fallback `picture` 和紧随其后的说明段落；桌面单图最大显示宽度不得超过 400px，移动端由 `col-12` 自动上下排列。不得用固定总宽度、绝对定位或自定义 CSS 强行并排。
+- 当源 DOCX 明确显示两图并排且图下有说明时，保留左右顺序并套用 `assets/paired-image-box.html`。必须恰好两个 `col-12 col-md-6` 子项，每项含完整 WebP/fallback `picture` 和紧随其后的说明段落；桌面单图最大显示宽度不得超过 400px，移动端由 `col-12` 自动上下排列。不得用固定总宽度、绝对定位或自定义 CSS 强行并排。
 - 每篇文章正文最后必须且只能出现一个标准 Buy Box，使用资产文件中的完整 HTML，不自行简化或重设计。
 - 结语最后一次导向首页时，必须把 DOCX 实际提供的自然关键词短语设为链接锚文本，例如“最佳皮克敏種花助手”“最佳寶可夢飛人工具”或“最佳自動種花助手”；紧随其后的品牌名 `PoGoskill` 保持为普通文字。禁止把 `PoGoskill` 本身设为结语首页链接，也不得自行发明文稿中没有的关键词。
 
@@ -57,7 +57,7 @@ description: 将 PoGoskill 台湾站 SEO 文稿转换为文章内容页面模板
 - Guide／操作步骤只允许改变 HTML 包装，不允许改变 DOCX 文字。`strong` 只能包住源文开头已经存在的短标题或冒号前原文；其后的说明必须逐字保留原顺序。禁止为了套格式自行概括标题、改写、润色、缩写、扩写、合并、拆分或重排任何步骤文字。源文没有独立短标题时，整段放入 `label` 且不加 `strong`，不得编造标题。
 - FAQ 默认不放下载 CTA。只有某个问答的源文确实解释并推荐 PoGoskill 时，才可在该答案之后额外放一组繁中 CTA；不得因为文章关联产品而自动加入，也不得误用英文 CTA。
 - 标准 Buy Box 内部自带的 `dev-desktop` / `dev-mobile` 属于产品组件，不计入正文下载 CTA 数量，也不得删改。
-- 同一章节出现多个并列对象时，不要为每个对象创建 H3。优先使用参考文章已有的列表或表格；只有参考文章存在对应卡片组件时才能原样复用，H3 只表示真正的逻辑子章节。
+- 同一章节出现多个并列对象时，不要为每个对象创建 H3。优先使用包内已有的列表或表格；未获包内契约支持时不得添加卡片组件，H3 只表示真正的逻辑子章节。
 - 文章底部、相关文章上方的面包屑使用 V2 模板的 `.content-navlinks`；其中 `.tit` 包含“主頁 → 分类”，当前文章标题是父级下的 `a.text-primary`。必须让父级纵向排列、`.tit` 可换行、当前标题独占一行。
 - 正文中不重复创建面包屑，也不新增局部 CSS 修补。必须复用已验证正常的 V2 `.content-navlinks` 结构与 class；若仍挤压、覆盖或横向溢出，退回修改 HTML 结构或报告模板问题，不自行改样式。
 

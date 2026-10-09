@@ -74,7 +74,7 @@
 
 ## V2 HTML
 
-并排双图在 manifest 中使用相同 `pair_key`，并分别记录 `pair_order: 1` 与 `pair_order: 2`、`display_mode: paired` 和非空 `caption`。仅在 DOCX／参考样式明确分组时使用；回填采用对应语言 Publisher 的 `assets/paired-image-box.html`。横图单张 `max_width` 不超过 400px；竖图继续使用 `max_height` 限制。两图都独立满足 WebP/fallback、ALT、URL 与尺寸检查，且左右顺序不得交换。
+并排双图在 manifest 中使用相同 `pair_key`，并分别记录 `pair_order: 1` 与 `pair_order: 2`、`display_mode: paired` 和非空 `caption`。仅在 DOCX 明确分组时使用；回填采用对应语言 Publisher 的 `assets/paired-image-box.html`。横图单张 `max_width` 不超过 400px；竖图继续使用 `max_height` 限制。两图都独立满足 WebP/fallback、ALT、URL 与尺寸检查，且左右顺序不得交换。
 
 CMS 新上传资源的已发布范例使用：
 
