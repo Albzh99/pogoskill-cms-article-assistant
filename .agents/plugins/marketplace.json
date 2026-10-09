@@ -1,0 +1,20 @@
+{
+  "name": "pogoskill-only",
+  "interface": {
+    "displayName": "Pogoskill Only"
+  },
+  "plugins": [
+    {
+      "name": "pogoskill-cms-assistant",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pogoskill-cms-assistant"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

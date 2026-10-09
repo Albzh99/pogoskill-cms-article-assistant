@@ -1,0 +1,4 @@
+interface:
+  display_name: "PoGoskill CMS 图片 Agent"
+  short_description: "提取、转换、双格式上传并回填 V2 文章图片"
+  default_prompt: "使用 $pogoskill-cms-image-pipeline 处理当前 PoGoskill 文章的真实图片素材，成对上传并用图片上传 publish_id 单独发布图片资源，确认前台可读后回填草稿；不生成或发布文章页面。"

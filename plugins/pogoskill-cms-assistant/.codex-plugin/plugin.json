@@ -1,0 +1,22 @@
+{
+  "name": "pogoskill-cms-assistant",
+  "version": "1.0.0",
+  "description": "PoGoskill 繁中与英文站专用 CMS 文章助手；保留固定 V2 HTML、双格式图片、草稿回读与审查流程，不包含其他站点规范学习。",
+  "author": {
+    "name": "PoGoskill Team"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "PoGoskill CMS 文章助手",
+    "shortDescription": "PoGoskill 繁中／英文 V2 文章转写与 CMS 草稿上传。",
+    "longDescription": "只处理 PoGoskill 台湾站和英文站文章。复用已验证的 HTML、图片、下载区和 Buy Box 规则，完成 CMS 草稿写入与回读，不生成或发布文章页面。",
+    "developerName": "PoGoskill Team",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "defaultPrompt": [
+      "使用 $pogoskill-cms-article-assistant 处理这篇 PoGoskill 繁中 DOCX；完整保留正文与图片，按台湾站 V2 规范保存并回读 CMS 草稿，不生成或发布文章页面。",
+      "使用 $pogoskill-cms-en-publisher 处理这篇 PoGoskill 英文 DOCX；用中文汇报，按英文站 V2 规范保存并回读 CMS 草稿，不生成或发布文章页面。",
+      "请按本仓库 START-HERE.md 为我安装并检查 PoGoskill CMS 文章助手。先检查已存 CMS Key，有效时不要再次索取。"
+    ]
+  }
+}

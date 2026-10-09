@@ -1,0 +1,3 @@
+source=https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.6.0-windows-x64.zip
+sha256=48886f506b21f62e4661f0f4cbfca19800897c385128e8902542d29a950c93f1
+installed_at=2026-09-20T15:13:00.0929968+08:00

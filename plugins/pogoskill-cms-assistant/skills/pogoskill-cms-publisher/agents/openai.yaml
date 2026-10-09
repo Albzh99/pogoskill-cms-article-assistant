@@ -1,0 +1,6 @@
+interface:
+  display_name: "PoGoskill CMS 发文 Agent"
+  short_description: "将台湾站文章转换为 V2 HTML 并安全写入 CMS 草稿"
+  default_prompt: "Use $pogoskill-cms-publisher to convert this article into readable V2 HTML and upload it as a CMS draft."
+policy:
+  allow_implicit_invocation: true
