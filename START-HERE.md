@@ -1,5 +1,7 @@
 # 给 PoGoskill 同事：三步开始
 
+想要 Word 版逐步说明，可下载 [PoGoskill 文章助手同事使用指南](docs/PoGoskill%20文章助手同事使用指南.docx)。
+
 1. 向 CMS 管理员取得你有权限使用的 Open API Key。**不要发到 AI 聊天或 GitHub。**如果电脑以前已经保存过 Key，先让 AI 检查，不要重新索取。
 2. 把下面整段发给 Codex AI，让它自己安装、检查和打开终端；你不用输入命令：
 

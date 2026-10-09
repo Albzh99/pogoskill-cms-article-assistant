@@ -2,7 +2,7 @@
 
 这份插件**只处理 PoGoskill 台湾繁中站与英文站**，从已经验证的 V2 HTML 规范制作文章，处理双格式图片并保存、回读 CMS 草稿。它不包含 Tenorshare 其他站点的“首次学习规范”功能，也不把两种语言的模板或产品 ID 混用。
 
-给同事直接发[一页使用说明](START-HERE.md)。技术安装细节在[SETUP.md](SETUP.md)。
+给同事直接发 [Word 使用指南](docs/PoGoskill%20文章助手同事使用指南.docx) 或[一页使用说明](START-HERE.md)。技术安装细节在[SETUP.md](SETUP.md)。
 
 ## 包含什么
 
