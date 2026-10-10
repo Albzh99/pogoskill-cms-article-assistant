@@ -51,3 +51,5 @@ English and Traditional Chinese are different CMS sites:
 | Download IDs | `7144` / `7145` | `7925` / `7926` |
 
 Never transfer IDs, URLs, content language or assets across these site profiles.
+
+Before every English page write, use the English site's live `/cms/classify/displayclassifylist` response. The chosen classification page ID, optional own classification ID and URL directory must agree. A Pikmin Bloom article requires the English `pikmin-bloom/` record and path, never `game-app/`; do not reuse the Taiwan example IDs.

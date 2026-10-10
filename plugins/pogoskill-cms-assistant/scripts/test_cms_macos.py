@@ -2,6 +2,7 @@ import importlib.util
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 SPEC = importlib.util.spec_from_file_location("cms_macos", Path(__file__).with_name("cms-macos.py"))
@@ -35,8 +36,40 @@ class MacTransportTests(unittest.TestCase):
             MODULE.checked_response(b'{"code":60001,"request_id":"bad"}', "/cms/site/list")
 
     def test_visible_newline_tokens_rejected_before_request(self):
-        with self.assertRaises(ValueError):
-            MODULE.request_json("/cms/page/add", {"content": "part 1\\npart 2"}, api_key="placeholder")
+        payload = {"site_id": 324, "product_id": ["6333", "6332"],
+                   "content": "part 1\\npart 2"}
+        with patch.object(MODULE, "cms_post") as post:
+            with self.assertRaisesRegex(ValueError, "escaped-newline"):
+                MODULE.request_json("/cms/page/add", payload, api_key="placeholder")
+            post.assert_not_called()
+
+    def test_page_write_checks_live_classification_before_post(self):
+        payload = {"site_id": 324, "product_id": ["6333", "6332"],
+                   "subject": "皮克敏攻略", "url": "game-app/pikmin-guide.html",
+                   "classify_id": 12466, "classify_page_id": 259613,
+                   "content": "<div>\n<p>Content.</p>\n</div>"}
+        categories = {"code": 0, "request_id": "read", "data": {"list": [
+            {"id": 259613, "classify_id": 12466, "dir": "game-app/", "status": 1}
+        ]}}
+        with patch.object(MODULE, "cms_post", return_value=categories) as post:
+            with self.assertRaisesRegex(ValueError, "pikmin-bloom"):
+                MODULE.request_json("/cms/page/add", payload, api_key="placeholder")
+            self.assertEqual(post.call_count, 1)
+            self.assertEqual(post.call_args.args[0], "/cms/classify/displayclassifylist")
+
+    def test_english_page_write_keeps_english_products_and_classification(self):
+        payload = {"site_id": 286, "product_id": ["4987", "4988"],
+                   "subject": "Pikmin Bloom guide", "url": "pikmin-bloom/article.html",
+                   "classify_id": 77, "classify_page_id": 88,
+                   "content": "<div>\n<p>Complete content.</p>\n</div>"}
+        categories = {"code": 0, "request_id": "read", "data": {"list": [
+            {"id": 88, "classify_id": 77, "dir": "pikmin-bloom/", "status": 1}
+        ]}}
+        response = {"code": 0, "request_id": "write", "data": {"id": 1}}
+        with patch.object(MODULE, "cms_post", side_effect=[categories, response]) as post:
+            self.assertEqual(MODULE.request_json("/cms/page/add", payload, api_key="placeholder"), response)
+            self.assertEqual([call.args[0] for call in post.call_args_list],
+                             ["/cms/classify/displayclassifylist", "/cms/page/add"])
 
 if __name__ == "__main__":
     unittest.main()

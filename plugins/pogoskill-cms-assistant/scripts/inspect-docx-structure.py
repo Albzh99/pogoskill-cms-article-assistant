@@ -29,11 +29,30 @@ def paragraph_record(node, rels):
         rel_id = blip.get(qname("r", "embed"))
         if rel_id and rel_id in rels:
             image_targets.append(rels[rel_id])
+    bold_spans = []
+    current_bold = ""
+    for run in node.findall(".//w:r", NS):
+        run_text = "".join(part.text or "" for part in run.findall("./w:t", NS))
+        props = run.find("./w:rPr", NS)
+        marker = props.find("./w:b", NS) if props is not None else None
+        run_style = props.find("./w:rStyle", NS) if props is not None else None
+        explicit_bold = (
+            (marker is not None and marker.get(qname("w", "val"), "1").lower() not in {"0", "false", "off"})
+            or (run_style is not None and run_style.get(qname("w", "val"), "").lower() in {"strong", "bold"})
+        )
+        if explicit_bold:
+            current_bold += run_text
+        elif current_bold.strip():
+            bold_spans.append(current_bold.strip())
+            current_bold = ""
+    if current_bold.strip():
+        bold_spans.append(current_bold.strip())
     return {
         "type": "paragraph",
         "style": style,
         "text": node_text(node),
         "images": image_targets,
+        "bold_spans": bold_spans,
     }
 
 

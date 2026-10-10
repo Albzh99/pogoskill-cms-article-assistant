@@ -30,6 +30,7 @@
 
 - V2 实际文章常以 `classify_page_id` 表示分类聚合页，`classify_id` 可能为 `null`。
 - 从 `/cms/classify/displayclassifylist` 取得 `id` 与 `classify_id`，不要互换。
+- 皮克敏文章必须匹配分类目录 `pikmin-bloom/`，不能因为同属游戏内容而选择 `game-app/`。2026-10-08 本地分类响应示例为“皮克敏攻略”分类页面 ID 465737、分类自身 ID 18939；这只是核对样本，写入前仍以本站实时分类列表为准。URL、`classify_page_id` 与非空 `classify_id` 必须指向同一条分类记录。
 - `related_id` 是页面 ID 数组。写入前用 `/cms/page/list` 按 IDs 回查标题、URL、站点和状态。
 
 ## 已验证读取接口

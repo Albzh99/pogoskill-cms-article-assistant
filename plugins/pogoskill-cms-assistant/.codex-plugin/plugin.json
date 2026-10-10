@@ -1,6 +1,6 @@
 {
   "name": "pogoskill-cms-assistant",
-  "version": "1.0.0+codex.20261009075414",
+  "version": "1.0.0+codex.20261010104652",
   "description": "PoGoskill \u7e41\u4e2d\u4e0e\u82f1\u6587\u7ad9\u4e13\u7528 CMS \u6587\u7ae0\u52a9\u624b\uff1b\u4fdd\u7559\u56fa\u5b9a V2 HTML\u3001\u53cc\u683c\u5f0f\u56fe\u7247\u3001\u8349\u7a3f\u56de\u8bfb\u4e0e\u5ba1\u67e5\u6d41\u7a0b\uff0c\u4e0d\u5305\u542b\u5176\u4ed6\u7ad9\u70b9\u89c4\u8303\u5b66\u4e60\u3002",
   "author": {
     "name": "PoGoskill Team"

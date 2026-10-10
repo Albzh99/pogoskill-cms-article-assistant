@@ -239,6 +239,10 @@ def validate_step_lists(html_text, errors):
 
 def validate(html_text, assets_dir=None, profile="tw"):
     errors = []
+    if len(html_text) >= 3000:
+        lines = html_text.splitlines()
+        if len(lines) < 12 or max(map(len, lines)) > 2400:
+            errors.append("article HTML is a compressed chunk; use real line breaks and readable indentation")
     parser = StructureParser()
     try:
         parser.feed(html_text)

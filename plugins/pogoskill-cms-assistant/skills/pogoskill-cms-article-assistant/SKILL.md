@@ -7,6 +7,8 @@ description: 将一篇 PoGoskill 台湾站 DOCX 完整处理为图片已单独�
 
 负责从 DOCX 到可审查 CMS 草稿的完整闭环。不要只生成局部 HTML、只上传图片，或在尚未获得 CMS 回读证据时结束。
 
+此入口的固定站点是繁中 `pogoskilltw`／site 324。若稿件与目标是英文 `pogoskill`／site 286，改用 `$pogoskill-cms-en-publisher` 及其英文资产，不执行繁中 Publisher；两站的分类、产品、下载 PID、图片地址及 Buy Box 不互换。写前和回读时均检查分类与 URL 目录、步骤短标题加粗及解码后 HTML 的真实换行。
+
 开始时完整读取并依次使用：
 
 1. [CMS 真实执行与证据契约](references/execution-contract.md)；

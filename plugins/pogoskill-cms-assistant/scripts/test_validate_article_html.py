@@ -256,6 +256,18 @@ class ValidatorTests(unittest.TestCase):
     def test_truncated_html_is_blocked(self):
         self.assertFalse(VALIDATOR.validate(sample_html()[:-20], PUBLISHER / "assets")["ok"])
 
+    def test_compressed_taiwan_html_is_blocked(self):
+        compact = sample_html().replace("\n", "")
+        result = VALIDATOR.validate(compact, PUBLISHER / "assets")
+        self.assertFalse(result["ok"])
+        self.assertTrue(any("compressed chunk" in item for item in result["errors"]))
+
+    def test_compressed_english_html_is_blocked(self):
+        compact = sample_en_html().replace("\n", "")
+        result = VALIDATOR.validate(compact, EN_PUBLISHER / "assets", "en")
+        self.assertFalse(result["ok"])
+        self.assertTrue(any("compressed chunk" in item for item in result["errors"]))
+
     def test_inline_markup_after_step_badge_is_blocked(self):
         broken = sample_html().replace(
             '<span>步驟 1</span><label><strong>連接手機：</strong>操作。</label>',

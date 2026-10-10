@@ -29,7 +29,7 @@ description: 将 PoGoskill 台湾站 SEO 文稿转换为文章内容页面模板
 1. 用站点列表确认台湾站仍为目标站点。
 2. 用页面列表按 URL 与标题查重；命中时选择更新，不重复创建。
 3. 查询文章 V2 模板及其自定义字段。
-4. 查询并确认作者、分类页、产品和相关文章；相关文章必须存在且属于正确站点。产品必须通过 `/cms/product/list` 与 `/cms/product/info` 实时核验，并严格写成 `"product_id": ["6333", "6332"]`，即 PoGoskill/Windows 与 PoGoskill(Mac)/Mac；`7925`、`7926` 是下载 PID，不得写进 `product_id`。
+4. 查询并确认作者、分类页、产品和相关文章；相关文章必须存在且属于正确站点。分类必须用本站实时 `/cms/classify/displayclassifylist` 核对页面 ID、分类自身 ID、目录前缀与文章主题；皮克敏文章只选 `pikmin-bloom/` 对应分类，不能选 `game-app/`，URL 也必须位于 `pikmin-bloom/`。产品必须通过 `/cms/product/list` 与 `/cms/product/info` 实时核验，并严格写成 `"product_id": ["6333", "6332"]`，即 PoGoskill/Windows 与 PoGoskill(Mac)/Mac；`7925`、`7926` 是下载 PID，不得写进 `product_id`。
 5. 使用本包固定的台湾站 V2 HTML 组件；无需每篇重新读取已发布文章学习版式。只有内置规范未覆盖特殊内容时，才可只读核对同站现有文章，并报告判断依据。
 
 任何关键字段无法确认时，停止在 CMS 写入前并报告缺失项。
@@ -38,7 +38,7 @@ description: 将 PoGoskill 台湾站 SEO 文稿转换为文章内容页面模板
 
 - 使用繁体中文和台湾用语，保持 `PoGoskill` 大小写。
 - 正文不写 `<h1>`；H1 由 CMS `subject` 和模板渲染。
-- 输出按标签和逻辑区块换行、缩进，确保人工可读；禁止把 HTML 压成一整行。
+- 输出按标签和逻辑区块换行、缩进，确保人工可读；禁止把 HTML 压成一整行。JSON 序列化时只转义传输层，`content` 解码后必须仍有真实换行；写前校验与写后 CMS `page/info` 回读都检查可读性。
 - 保持正确 heading hierarchy，使用带稳定 `id` 的 `<section>` 与目录锚点。
 - 写 HTML 前先列出章节大纲：每个 H2 对应一个目录项；H3 只用于真正的子主题，且后面必须有完整段落、列表或表格。禁止连续 H3、把单个步骤做成 H3，或为了视觉效果拆出大量小标题。
 - 模板文章 `240801` 及同类旧文的结构结论已整理进本包 `references/legacy-article-patterns.md`。直接按固定契约选择适合当前内容的目录、列表、表格、步骤、图片、视频、FAQ、下载模块和产品模块，不要求再次读取旧文。
@@ -54,7 +54,7 @@ description: 将 PoGoskill 台湾站 SEO 文稿转换为文章内容页面模板
 - PoGoskill 主介绍模块的桌面下载 CTA 只放一组，并必须逐字复制 `assets/download-cta.html`。完整结构必须含 `dev-desktop > btn-groups > 两个 secure-btn`，每个按钮下保留 `secure-download` 安全下载框；桌面按钮组固定居中，缺任一层都禁止上传。必须先写完 PoGoskill 的介绍、适用情境、操作思路、作用与优势，再放下载 CTA；不得在第一段介绍后立刻插入按钮。若 DOCX 的某个 FAQ 答案明确介绍或推荐 PoGoskill，可在该答案后额外复制一组繁中 CTA；没有明确推荐则不放。
 - PoGoskill 模块固定顺序为“完整介绍与优势文字 → 下载 CTA → 较大的现有 H3『PoGoskill 操作步驟』→ `step-cont` 步骤”。操作步骤标题不得做成普通 `section-label`、H4 或自创标题样式，必须使用 `h3-triangle` 或同分类已验证等价组件；单独的每个步骤不再使用 H3。
 - `step-cont` 每一步固定为 `<li><p><span>步驟 N</span><label><strong>步驟短標題：</strong>完整說明。</label></p>圖片盒</li>`。`label` 必须无 class，并把加粗短标题和普通正文完整包在一起；`strong` 不能直接成为 `p` 的子元素，否则站点的横向步骤布局会把标题和正文拆成多列，造成逐字换行。图片盒必须放在该 `<p>` 之后，不能塞进段落。
-- Guide／操作步骤只允许改变 HTML 包装，不允许改变 DOCX 文字。`strong` 只能包住源文开头已经存在的短标题或冒号前原文；其后的说明必须逐字保留原顺序。禁止为了套格式自行概括标题、改写、润色、缩写、扩写、合并、拆分或重排任何步骤文字。源文没有独立短标题时，整段放入 `label` 且不加 `strong`，不得编造标题。
+- Guide／下载／操作步骤只允许改变 HTML 包装，不允许改变 DOCX 文字。源文步骤开头有独立短标题或冒号前原文时，必须在同一个 `label` 内用 `<strong>` 原样加粗；其后的说明必须逐字保留原顺序。禁止为了套格式自行概括标题、改写、润色、缩写、扩写、合并、拆分或重排任何步骤文字。源文没有独立短标题时，整段放入 `label` 且不加 `strong`，不得编造标题。
 - FAQ 默认不放下载 CTA。只有某个问答的源文确实解释并推荐 PoGoskill 时，才可在该答案之后额外放一组繁中 CTA；不得因为文章关联产品而自动加入，也不得误用英文 CTA。
 - 标准 Buy Box 内部自带的 `dev-desktop` / `dev-mobile` 属于产品组件，不计入正文下载 CTA 数量，也不得删改。
 - 同一章节出现多个并列对象时，不要为每个对象创建 H3。优先使用包内已有的列表或表格；未获包内契约支持时不得添加卡片组件，H3 只表示真正的逻辑子章节。
@@ -84,10 +84,10 @@ description: 将 PoGoskill 台湾站 SEO 文稿转换为文章内容页面模板
 2. URL 必须为小写 `.html` 相对路径，并已通过 CMS 查重。
 3. 新建使用 `/cms/page/add`；已存在页面使用 `/cms/page/update`，更新前先读回当前版本。
    用户明确要求修改某个现有草稿时，先以页面 ID/URL 回读确认目标，再直接更新该草稿；若图片已上传但前台 URL 为 404，先用原图片上传 `publish_id` 发布图片资源，确认上云后再更新原草稿。不得改为新增页面或重复上传图片。
-4. 保存前运行插件根目录 `scripts/validate-image-coverage.py`，把 DOCX structure、图片 manifest 与最终 HTML 三方对账；只有源图片出现次数、manifest 项数、HTML 回填数完全一致且 `pass: true` 才允许写入。保存后立即调用 `/cms/page/info` 回读，对回读 JSON 再运行同一图片完整度校验，并逐项比对元数据、正文、图片盒和 Buy Box；随后运行 `scripts/assert-cms-page-products.ps1 -ResponsePath <page-info-response.json>`，确认产品严格回读为 `6333`、`6332`。少一张图片或任一格式 URL 即阻断完成。
+4. 保存前运行插件根目录 `scripts/validate-image-coverage.py`，把 DOCX structure、图片 manifest 与最终 HTML 三方对账；只有源图片出现次数、manifest 项数、HTML 回填数完全一致且 `pass: true` 才允许写入。另保存本次分类列表响应，并运行 `scripts/cms-page-guard.py <payload.json> --classify-response <classify-response.json>`；不通过不得写入。保存后立即调用 `/cms/page/info` 回读，对回读 JSON 再运行图片完整度校验和 `cms-page-guard.py` 的 `--page-info` 模式，逐项比对分类、目录、元数据、正文可读性、图片盒和 Buy Box；Windows 另运行 `scripts/assert-cms-page-products.ps1 -ResponsePath <page-info-response.json>`，确认产品严格回读为 `6333`、`6332`。少一张图片、任一格式 URL、步骤短标题加粗或可读换行即阻断完成。
 5. 将页面 ID、草稿状态、回读结果、待补图片和所有 `request_id` 交给审查 Agent。
 
-上传前必须运行插件根目录 `scripts/validate-article-html.py <html-path> --assets-dir <publisher-assets-dir>`；返回非零时禁止调用写接口。写入后运行 `compare-docx-to-cms-page.py` 并检查缺失区块，不能只比较标题或开头几段。该比较器会把 DOCX 的步骤正文作为逐字保留门槛；`missing_step_blocks` 非空或脚本非零时必须修复草稿，不得解释为“只是润色”。
+上传前必须运行插件根目录 `scripts/validate-article-html.py <html-path> --assets-dir <publisher-assets-dir>`；返回非零时禁止调用写接口。写入后运行 `compare-docx-to-cms-page.py` 并检查缺失区块，不能只比较标题或开头几段。该比较器会把 DOCX 的步骤正文和源文已有短标题加粗作为保留门槛；`missing_step_blocks`、`missing_step_bold`、`missing_source_bold` 非空，或 `html_readable` 为 `false` 时必须修复草稿，不得解释为“只是润色”。
 
 ## 完成条件
 

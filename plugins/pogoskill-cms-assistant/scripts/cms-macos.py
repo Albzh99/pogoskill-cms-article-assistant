@@ -7,6 +7,7 @@ This file is intentionally separate from the existing Windows DPAPI scripts.
 import argparse
 import ctypes
 import getpass
+import importlib.util
 import io
 import json
 import mimetypes
@@ -23,6 +24,10 @@ BASE_URL = "https://gw.afirstsoft.com"
 KEY_PATTERN = re.compile(r"^AFS[0-9A-Za-z-]{17,}$")
 CMS_PATH = re.compile(r"^/cms/[a-z0-9/_-]+$")
 FILE_NAME = re.compile(r"^[a-z0-9_.-]{4,255}$")
+_GUARD_SPEC = importlib.util.spec_from_file_location("cms_page_guard", Path(__file__).with_name("cms-page-guard.py"))
+_GUARD = importlib.util.module_from_spec(_GUARD_SPEC)
+_GUARD_SPEC.loader.exec_module(_GUARD)
+
 def require_macos():
     if sys.platform != "darwin":
         raise RuntimeError("cms-macos.py requires macOS; Windows uses the existing PowerShell scripts")
@@ -141,10 +146,17 @@ def request_json(endpoint, payload, api_key=None, allow_image_publish=False):
     if endpoint == "/cms/pagepublish/publish" and not allow_image_publish:
         raise ValueError("Use publish-image with a saved picture/upload response")
     if endpoint in {"/cms/page/add", "/cms/page/update"}:
-        content = payload.get("content")
-        if isinstance(content, str) and any(token in content for token in
-            ("`n", "`r", "\\n", "\\r", "‘n", "’n", "&#96;n", "&grave;n")):
-            raise ValueError("HTML contains a visible escaped-newline token")
+        errors = _GUARD.payload_errors(payload)
+        if errors:
+            raise ValueError("; ".join(errors))
+        classification = cms_post(
+            "/cms/classify/displayclassifylist",
+            json.dumps({"site_id": payload["site_id"]}).encode("utf-8"),
+            api_key=api_key,
+        )
+        errors = _GUARD.classification_errors(payload, classification)
+        if errors:
+            raise ValueError("; ".join(errors))
     body = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     return cms_post(endpoint, body, api_key=api_key)
 

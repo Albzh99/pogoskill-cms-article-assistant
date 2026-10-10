@@ -137,7 +137,7 @@ Do not combine two unrelated adjacent images into this module merely to make the
 
 Keep the label around both bold lead text and the normal description so the layout cannot split into narrow columns.
 
-This markup change must not edit the source wording. The `<strong>` content may only be an exact lead phrase already present at the start of the DOCX step, normally the text before its first colon. Everything after it must remain word-for-word and in the same order. Do not paraphrase, polish, shorten, expand, merge or split Guide instructions. When the source has no explicit lead phrase, omit `<strong>` and place the full original instruction in `<label>`.
+This markup change must not edit the source wording. When a download or Guide step starts with an explicit short lead or colon-separated title, that exact source lead must appear in `<strong>` inside the same `<label>`; do not omit its bold formatting. Everything after it must remain word-for-word and in the same order. Do not paraphrase, polish, shorten, expand, merge or split Guide instructions. When the source has no explicit lead phrase, omit `<strong>` and place the full original instruction in `<label>`.
 
 ## FAQ
 
