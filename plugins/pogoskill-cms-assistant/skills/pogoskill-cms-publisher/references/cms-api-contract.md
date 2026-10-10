@@ -2,7 +2,7 @@
 
 所有接口统一使用 `POST https://gw.afirstsoft.com/cms/...`。JSON 请求携带 `X-API-KEY`、`Accept: application/json`、`Content-Type: application/json; charset=utf-8`；上传图片使用 `multipart/form-data`。HTTP 200 不代表业务成功，必须确认响应 `code === 0` 并记录 `request_id`。
 
-API Key 只能由插件根目录 `scripts/CmsCredential.ps1` 的 `Get-CmsStoredApiKey` 读取。脚本优先读取 `%LOCALAPPDATA%\PoGoskillCMS\OpenAPI.v1.dat` 中经 Windows DPAPI（LocalMachine）保护且 ACL 限制为当前用户的稳定副本，并兼容 Windows Credential Manager 的 `PoGoskillCMS/OpenAPI`；插件升级不会删除该文件。禁止把密钥明文写入文章、脚本参数、JSON、日志或回复。JSON 请求优先调用插件根目录的 `scripts/cms-request.ps1`。
+先判断系统。Windows API Key 由插件根目录 `scripts/CmsCredential.ps1` 的 `Get-CmsStoredApiKey` 读取，优先读取 `%LOCALAPPDATA%\PoGoskillCMS\OpenAPI.v1.dat` 中的当前用户稳定副本，并兼容 Windows Credential Manager。Mac API Key 由 `scripts/cms-macos.py` 从当前用户 Keychain 读取，JSON POST 用其 `request` 命令。Mac 不运行 `.ps1`。禁止把密钥明文写入文章、脚本参数、JSON、日志或回复。
 
 Windows Credential Manager 返回 `1312` 时继续检查受保护本地副本，不得直接索取 API Key。只有统一读取函数确认两个位置都没有有效凭据时，才运行 `cms-save-api-key.ps1`。保存脚本会写入受保护副本；Credential Manager 可用时再同时写入。不得自行绕过统一函数或从旧聊天内容恢复 Key。
 

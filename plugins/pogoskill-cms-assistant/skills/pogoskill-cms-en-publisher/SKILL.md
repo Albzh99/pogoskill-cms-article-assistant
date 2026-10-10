@@ -18,6 +18,8 @@ Use this skill only for English articles on `https://www.pogoskill.com`. Traditi
 
 Before any CMS request, read the shared [execution evidence contract](../pogoskill-cms-article-assistant/references/execution-contract.md). Before writing HTML, read:
 
+For embedded article images, also read and run the shared `$pogoskill-cms-image-pipeline` skill. On macOS use its Python commands (`cms-macos-image-pipeline.py`), not the Windows PowerShell scripts. Check the current user's Keychain once before asking for a Key.
+
 1. [English V2 HTML contract](references/english-html-contract.md);
 2. [English CMS live contract](references/cms-en-live-contract.md);
 3. `assets/download-cta.html`, `assets/buybox.html`, `assets/paired-image-box.html`, `assets/responsive-table.html`, and `assets/wide-table.html` in full.

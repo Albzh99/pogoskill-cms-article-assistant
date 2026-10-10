@@ -20,6 +20,6 @@
 
 只在用户明确要求当前文章保存到 CMS 时新建或更新**该文章草稿**。新图上传后须使用该次图片上传返回的 `publish_id` 单独发布图片资源，使草稿可显示图片；这不是发布文章。默认不调用 `/cms/page/make`，不发布文章页面，不删除或修改无关旧文章。所有成功报告须有真实写入和 `page/info` 回读证据。当前不声称 AI 已完成页面视觉预览。
 
-Windows 的完整 PoGoskill 工作流可用本包 PowerShell 和 Python 脚本执行。macOS 凭据与基础 CMS 客户端保留供检查，但 PoGoskill 图片上传脚本目前是 PowerShell/Windows 流程；未在 macOS 做端到端验证，不应宣称 macOS 可完整自动上传。
+Windows 使用 PowerShell/Python；macOS 使用 Python、Keychain 和 `cms-macos-image-pipeline.py`，不得在 Mac 调用 `.ps1`。两平台都先运行 `verify-workstation.py`。Mac 图片流程已有对应脚本，但尚未在真实 Mac 端到端验证；请以本机自检和每次 CMS 响应/回读为准，不要提前宣称上传成功。
 
 此公开仓库不包含 API Key、同事个人文章或 CMS 私有回读。API Key 保存在各自电脑的系统凭据中，插件升级不会清除它。

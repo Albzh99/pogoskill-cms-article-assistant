@@ -21,23 +21,29 @@ description: 将一篇 PoGoskill 台湾站 DOCX 完整处理为图片已单独�
 
 ## API Key 首次设置
 
-API Key 由统一凭据脚本管理：优先使用稳定的 DPAPI 加密、当前 Windows 用户专属本地存储，并兼容 Windows Credential Manager。插件升级不会删除该存储。任务开始时先从当前已加载插件根目录运行 `scripts/cms-check-api-key.ps1`；禁止复用旧消息中带 `1.0.0+codex...` 的缓存路径。只有脚本确认两个位置都不存在时，才允许再次索取 Key。看到 Windows `1312` 不能直接判定 Key 丢失或阻断任务，检查脚本也绝不输出密钥内容。
+先判断当前操作系统。Windows 使用 DPAPI/Windows Credential Manager 和 `scripts/cms-check-api-key.ps1`；macOS 使用当前用户 Keychain 和 `python3 scripts/cms-macos.py check-key`。插件升级不应删除任一存储。脚本路径必须来自当前已加载的插件根目录，禁止复用旧消息中的版本缓存路径。只有对应平台检查确认无 Key，才允许再次索取。Windows `1312` 不等于 Key 丢失。Mac 上绝不运行 `.ps1`、`pwsh`、Windows `.exe` 或访问 `%LOCALAPPDATA%`。
 
-首次确实没有 CMS Key 时，采用“先启动命令、后复制”的交互流程。Agent 必须创建可持续跟踪的终端运行会话，在当前插件根目录运行：
+首次确实没有 CMS Key 时，采用“先启动命令、后复制”的交互流程。Agent 必须创建可持续跟踪的终端运行会话，在当前插件根目录运行当前系统对应命令：
 
 ```powershell
 pwsh -NoProfile -File scripts/cms-save-api-key.ps1
 ```
 
-脚本停在“请现在复制完整的 CMS API Key”后，Agent 必须把同一个运行会话打开到 Codex 可见终端面板。只有打开终端的工具返回成功后才能说“终端已打开”；不得把后台会话描述成可见终端，也不得让使用者手工打开 PowerShell 或输入缓存长路径。此时让使用者复制 Key，回到终端直接按 Enter；脚本随后读取剪贴板，写入 DPAPI 加密且仅当前 Windows 用户可读的本地存储，并在可用时同时写入 Windows Credential Manager，最后清空剪贴板。Agent 必须等待同一进程明确退出，再从同一插件根目录运行 `cms-check-api-key.ps1`；检查报告可用后才算完成。不要让使用者把 Key 粘贴进终端、发到聊天、写进命令行、文章文件或日志。
+macOS：
 
-如果 Agent 已经确认使用者提前复制完 Key，并且要通过非交互终端自动执行，则使用：
+```sh
+python3 scripts/cms-macos.py save-key
+```
+
+脚本停在“请现在复制完整的 CMS API Key”后，Agent 必须把同一个运行会话打开到 Codex 可见终端面板。只有打开终端的工具返回成功后才能说“终端已打开”；不得把后台会话描述成可见终端，也不得让使用者手工输入缓存长路径。此时让使用者复制 Key，回到终端直接按 Enter；脚本读取剪贴板，保存到当前平台的安全凭据存储并清空剪贴板。Agent 必须等待同一进程明确退出，再从同一插件根目录运行当前平台对应的 Key 检查；检查报告可用后才算完成。不要让使用者把 Key 粘贴进终端、发到聊天、写进命令行、文章文件或日志。
+
+仅 Windows：如果 Agent 已确认使用者提前复制完 Key，且要通过非交互终端自动执行，则使用：
 
 ```powershell
 pwsh -NoProfile -File scripts/cms-save-api-key.ps1 -FromClipboard
 ```
 
-`-FromClipboard` 会立即读取剪贴板，不等待 Enter。只有使用者明确要求键盘隐藏输入时才使用 `-Prompt`；默认禁止用 `-Prompt` 代替剪贴板流程。若 Credential Manager 返回 `1312`，但脚本明确显示受保护备用存储保存成功，则继续运行检查脚本，不得再次询问。若检查失败，先核对保存和检查是否来自同一当前插件根目录、进程是否确实退出以及 `%LOCALAPPDATA%\PoGoskillCMS\OpenAPI.v1.dat` 是否存在；完成诊断前不得要求再次输入。
+`-FromClipboard` 会立即读取剪贴板，不等待 Enter；Mac 不使用该参数。只有使用者明确要求键盘隐藏输入时才在 Windows 使用 `-Prompt`。若 Windows Credential Manager 返回 `1312`，但受保护备用存储保存成功，则继续检查。若检查失败，先核对保存和检查是否在同一操作系统用户下运行、进程是否确实退出、是否使用当前插件路径；Windows 再检查稳定备用存储，Mac 再检查 Keychain。诊断前不得要求再次输入。
 
 ## 强制执行闭环
 

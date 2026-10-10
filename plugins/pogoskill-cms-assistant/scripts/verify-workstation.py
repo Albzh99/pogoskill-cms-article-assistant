@@ -67,8 +67,10 @@ def check(system=None, powershell=None):
         response = mac_site_list()
     else:
         raise RuntimeError("This plugin currently supports Windows and macOS only")
+    if not image_capability():
+        raise RuntimeError("Pillow with WebP encoding support is unavailable; image upload workflow is not ready")
     return {"pass": True, "platform": system, "cms_site_count": validate_site_response(response),
-            "request_id": response["request_id"], "webp_encoder_available": image_capability(),
+            "request_id": response["request_id"], "webp_encoder_available": True,
             "key_displayed": False}
 
 

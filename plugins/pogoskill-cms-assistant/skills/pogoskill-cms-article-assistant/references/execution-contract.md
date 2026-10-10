@@ -6,15 +6,15 @@
 
 - “正在读取／正在上传／正在回读”等进度句后面必须立即出现真实工具调用；不得只发进度文字后停下。
 - 上传脚本若返回运行会话 ID，必须轮询同一会话直至退出并读取最终输出。禁止把工具执行改成无人跟踪的交互式终端阶段，也不得因当前消息没有 manifest 汇总就声称未执行。
-- API Key 保存是唯一需要使用者配合的交互步骤。必须从当前插件根目录创建可跟踪的终端会话，等待剪贴板提示，再把该会话实际显示到 Codex 终端面板；禁止复用旧缓存版本路径。只有显示终端工具成功后才能声称终端已打开。使用者按 Enter 后继续等待同一进程退出，并立即用同一插件根目录的 `cms-check-api-key.ps1` 回读验证。
+- API Key 保存是唯一需要使用者配合的交互步骤。先判断系统：Windows 使用 `cms-check-api-key.ps1`／`cms-save-api-key.ps1`；Mac 使用 `python3 scripts/cms-macos.py check-key`／`save-key`。必须从当前插件根目录创建可跟踪的终端会话，等待剪贴板提示，再把该会话实际显示到 Codex 终端面板；禁止复用旧缓存版本路径。只有显示终端工具成功后才能声称终端已打开。使用者按 Enter 后继续等待同一进程退出，并立即用当前平台的检查命令验证。
 - 只有工具或 API 已返回可核验结果，才能使用“已读取／已上传／已保存”等完成措辞。
 - 本地 HTML、JSON payload、图片转换完成不等于 CMS 已执行。
 - 不得凭感觉、旧对话、浏览器状态或一次命令准备过程判断 CMS、网络或权限异常。
 
 ## 2. 固定调用方式
 
-1. JSON 接口只用插件根目录 `scripts/cms-request.ps1` 发出真实 `POST`，不得改用浏览器表单。
-2. 调用前统一使用 `Get-CmsStoredApiKey`。脚本先读取 DPAPI 加密、当前用户专属的稳定本地存储，再兼容读取 Windows Credential Manager 的 `PoGoskillCMS/OpenAPI`；只要任一位置有效，就禁止再次索取 API Key。Windows `1312` 仅表示当前进程无法使用 Credential Manager，不等于备用凭据不存在。
+1. JSON 接口必须真实 `POST`：Windows 用插件根目录 `scripts/cms-request.ps1`，Mac 用 `python3 scripts/cms-macos.py request --path <路由> --body <JSON文件> --output <响应文件>`；页面写入再加 `--execute`。不得改用浏览器表单；Mac 绝不运行 Windows `.ps1`。
+2. Windows 调用前统一使用 `Get-CmsStoredApiKey`，先读 DPAPI 稳定存储再读 Credential Manager；Mac 统一读取当前用户 Keychain。只要该平台凭据有效，就禁止再次索取 API Key。Windows `1312` 不等于备用凭据不存在。
 3. HTTP 200 不是成功；只有响应 JSON 的 `code === 0` 才算业务成功。
 4. 每次请求都把请求 body 与响应保存到当前文章工作目录；文件名包含顺序、接口和时间，例如 `03-page-add-request.json`、`03-page-add-response.json`。
 5. 日志和回复只记录 endpoint、时间、curl exit code、业务 `code`、`msg`、`request_id`、页面 ID；不得记录 API Key。

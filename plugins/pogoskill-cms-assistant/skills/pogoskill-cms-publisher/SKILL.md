@@ -17,7 +17,7 @@ description: 将 PoGoskill 台湾站 SEO 文稿转换为文章内容页面模板
 
 ## 授权和安全
 
-- API Key 只从安全环境变量或会话 Secret 读取，不写入 HTML、文件、日志或回复。
+- API Key 只通过对应平台的统一凭据脚本读取：Windows 为 DPAPI/Credential Manager，Mac 为 Keychain。不要另索取环境变量或会话 Secret；不写入 HTML、文件、日志或回复。
 - 默认允许只读查询和本地 HTML 转换。创建或更新 CMS 草稿前，确认用户已明确要求该篇文章写入 CMS。
 - 绝不执行 `/cms/page/make`，也绝不把页面 ID 或文章生成所得 ID 传给 `/cms/pagepublish/publish`。图片 Pipeline 必须把当前图片上传响应中的 `publish_id` 传给该接口，以单独发布图片资源；这不等于发布文章。
 - 不删除文章、图片、文件或目录，不覆盖无法确认归属的页面。

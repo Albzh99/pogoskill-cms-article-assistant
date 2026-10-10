@@ -25,6 +25,12 @@ class PreflightTests(unittest.TestCase):
             self.assertEqual("繁中站", MODULE.windows_site_list("pwsh")["data"]["list"][0]["site_name"])
             self.assertEqual("utf-8", run.call_args.kwargs["encoding"])
 
+    def test_missing_webp_blocks_ready_state(self):
+        response = {"code": 0, "request_id": "r", "data": {"list": []}}
+        with patch.object(MODULE, "windows_site_list", return_value=response), patch.object(MODULE, "image_capability", return_value=False):
+            with self.assertRaisesRegex(RuntimeError, "WebP"):
+                MODULE.check(system="Windows")
+
 
 if __name__ == "__main__":
     unittest.main()
