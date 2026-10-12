@@ -20,6 +20,8 @@ Windows 稳定 Key 存储位于当前用户的 `%LOCALAPPDATA%\PoGoskillCMS\Open
 
 `check-key` 只证明当前进程从 Keychain 读到一个格式有效的 Key，**不证明网关授权**。遇到 HTTP 403 时，先在同一台 Mac、同一当前用户、当前插件版本下运行 `scripts/verify-workstation.py` 的只读 `/cms/site/list` 检查，并记录实际路径、HTTP 状态、响应中的 `code`、`msg`、`request_id`（绝不记录 Key）。若 `site/list` 成功而其他路径 403，定位具体路由、参数或资源权限；若 `site/list` 也 403，进一步核对是否读错 Keychain 条目、网关请求来源／VPN 或管理员权限，不要仅因 403 就断言 Key 没权限或要求用户反复重存。需要中台协助时提供脱敏后的路径、时间与 `request_id`。
 
+若 Mac 报 `Keychain status=-50`，先引用脚本的完整错误（`read`、`save` 或 `item lookup`），不要只说“Key 没权限”。读取遇到旧 Keychain API 的 `-50` 时，脚本会改用系统 `security find-generic-password -w` 读取同一服务与用户的条目；Key 仅在进程内接收，不输出到日志。已有条目覆盖保存时，脚本会完整取得旧条目的指针后再更新。若两个读取方式都失败，应记录两个非敏感状态码并停止；不要反复要求用户重存或显示 Key。
+
 ## 运行边界
 
 繁中使用 `$pogoskill-cms-article-assistant`，英文使用 `$pogoskill-cms-en-publisher`。完整规则在各技能的 `SKILL.md`、`references/` 和 `assets/`。文章默认只存草稿；图片上传后使用图片上传响应的 `publish_id` 单独发布图片资源。没有用户对当前文章的明确上传要求时只读 CMS 和制作本地 HTML；不生成、不发布文章页面，不删除、修改不相关的旧文章。
