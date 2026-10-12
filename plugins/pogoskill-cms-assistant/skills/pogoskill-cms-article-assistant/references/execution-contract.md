@@ -6,7 +6,7 @@
 
 - “正在读取／正在上传／正在回读”等进度句后面必须立即出现真实工具调用；不得只发进度文字后停下。
 - 上传脚本若返回运行会话 ID，必须轮询同一会话直至退出并读取最终输出。禁止把工具执行改成无人跟踪的交互式终端阶段，也不得因当前消息没有 manifest 汇总就声称未执行。
-- API Key 保存是唯一需要使用者配合的交互步骤。先判断系统：Windows 使用 `cms-check-api-key.ps1`／`cms-save-api-key.ps1`；Mac 使用 `python3 scripts/cms-macos.py check-key`／`save-key`。必须从当前插件根目录创建可跟踪的终端会话，等待剪贴板提示，再把该会话实际显示到 Codex 终端面板；禁止复用旧缓存版本路径。只有显示终端工具成功后才能声称终端已打开。使用者按 Enter 后继续等待同一进程退出，并立即用当前平台的检查命令验证。
+- API Key 保存是唯一需要使用者配合的交互步骤。先判断系统：Windows 使用 `cms-check-api-key.ps1`／`cms-save-api-key.ps1`，把等待输入的进程显示到 Codex 终端面板；Mac 使用 `python3 scripts/cms-macos.py check-key`，确实缺失时由 AI 运行 `open-save-key-terminal`，让独立的 macOS Terminal.app 窗口执行 `save-key`。Mac 不可直接在 Codex 终端运行 `save-key`，不可把 Codex 面板称为系统 Terminal；启动命令须收到外部窗口脚本的就绪信号，用户也须实际看见窗口。禁止复用旧缓存版本路径。使用者按 Enter 后立即用当前平台的检查命令及只读 `/cms/site/list` 验证；本地凭据可读与网关授权是两项不同检查。
 - 只有工具或 API 已返回可核验结果，才能使用“已读取／已上传／已保存”等完成措辞。
 - 本地 HTML、JSON payload、图片转换完成不等于 CMS 已执行。
 - 不得凭感觉、旧对话、浏览器状态或一次命令准备过程判断 CMS、网络或权限异常。

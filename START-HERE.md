@@ -5,9 +5,9 @@
 1. 向 CMS 管理员取得你有权限使用的 Open API Key。**不要发到 AI 聊天或 GitHub。**如果电脑以前已经保存过 Key，先让 AI 检查，不要重新索取。
 2. 把下面整段发给 Codex AI，让它自己安装、检查和打开终端；你不用输入命令：
 
-   > 请从公开仓库 https://github.com/Albzh99/pogoskill-cms-article-assistant 安装 PoGoskill 独立文章助手，按仓库 `SETUP.md` 自己操作。先检查本机旧 PoGoskill 插件与已保存的 CMS Key；只替换冲突的旧 PoGoskill 插件，不删除 Key，也不要安装 Tenorshare 其他站点学习包。Key 已可用就不要再问。若确实没有 Key，请把等待我按 Enter 的同一个终端真正打开给我看；我只会复制 Key 到剪贴板，再回到终端按 Enter，不会粘贴或手输命令。安装后实际运行本机检查与测试；需要新对话加载插件时告诉我。
+   > 请从公开仓库 https://github.com/Albzh99/pogoskill-cms-article-assistant 安装或更新 PoGoskill 独立文章助手，按仓库 `SETUP.md` 自己操作。先检查本机旧 PoGoskill 插件与已保存的 CMS Key；只替换冲突的旧 PoGoskill 插件，不删除 Key，也不要安装 Tenorshare 其他站点学习包。Key 已可用就不要再问。若确实没有 Key，Mac 上必须由你运行当前插件的 `cms-macos.py open-save-key-terminal`，打开独立的 macOS Terminal.app，并确认窗口内脚本已启动；不可以打开 Codex 内置终端面板代替。我只会复制 Key 到剪贴板，再回到那个系统 Terminal 窗口按 Enter，不会粘贴或手输命令。安装后实际运行本机检查与只读 CMS `site/list`，若返回 403，请给出脱敏的接口路径、状态、响应 `code`、`msg` 和 `request_id`，不要直接断言 Key 没权限或反复索要。需要新对话加载插件时告诉我。
 
-   Mac 用户也发同一句。助手必须自动识别 macOS，使用 Python＋Keychain；Windows 才使用 PowerShell。Mac 上若出现“运行 `.ps1` / `pwsh` / `.exe`”，说明仍加载了旧版插件，先按 `SETUP.md` 更新并新建对话，不要继续旧会话。
+   Mac 用户也发同一句。助手必须自动识别 macOS，使用 Python＋Keychain；Windows 才使用 PowerShell。Mac 上若出现“运行 `.ps1` / `pwsh` / `.exe`”或让你在 Codex 面板里按 Enter，说明仍在使用旧流程，先按 `SETUP.md` 更新并新建对话，不要继续旧会话。
 
 3. 上传一篇完整 DOCX，选择下面其中一句发送。PoGoskill 的繁中和英文 V2 规范已内置，不需要提供旧文章 URL、CMS 页面 ID、CSS 或 HTML：
 

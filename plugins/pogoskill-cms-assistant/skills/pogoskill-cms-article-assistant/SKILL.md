@@ -23,7 +23,7 @@ description: 将一篇 PoGoskill 台湾站 DOCX 完整处理为图片已单独�
 
 先判断当前操作系统。Windows 使用 DPAPI/Windows Credential Manager 和 `scripts/cms-check-api-key.ps1`；macOS 使用当前用户 Keychain 和 `python3 scripts/cms-macos.py check-key`。插件升级不应删除任一存储。脚本路径必须来自当前已加载的插件根目录，禁止复用旧消息中的版本缓存路径。只有对应平台检查确认无 Key，才允许再次索取。Windows `1312` 不等于 Key 丢失。Mac 上绝不运行 `.ps1`、`pwsh`、Windows `.exe` 或访问 `%LOCALAPPDATA%`。
 
-首次确实没有 CMS Key 时，采用“先启动命令、后复制”的交互流程。Agent 必须创建可持续跟踪的终端运行会话，在当前插件根目录运行当前系统对应命令：
+首次确实没有 CMS Key 时，采用“先启动命令、后复制”的交互流程。Windows 创建可持续跟踪的终端运行会话；macOS 必须由 AI 启动独立系统 Terminal.app，不使用 Codex 内置终端等待输入。在当前插件根目录运行对应命令：
 
 ```powershell
 pwsh -NoProfile -File scripts/cms-save-api-key.ps1
@@ -32,10 +32,10 @@ pwsh -NoProfile -File scripts/cms-save-api-key.ps1
 macOS：
 
 ```sh
-python3 scripts/cms-macos.py save-key
+python3 scripts/cms-macos.py open-save-key-terminal
 ```
 
-脚本停在“请现在复制完整的 CMS API Key”后，Agent 必须把同一个运行会话打开到 Codex 可见终端面板。只有打开终端的工具返回成功后才能说“终端已打开”；不得把后台会话描述成可见终端，也不得让使用者手工输入缓存长路径。此时让使用者复制 Key，回到终端直接按 Enter；脚本读取剪贴板，保存到当前平台的安全凭据存储并清空剪贴板。Agent 必须等待同一进程明确退出，再从同一插件根目录运行当前平台对应的 Key 检查；检查报告可用后才算完成。不要让使用者把 Key 粘贴进终端、发到聊天、写进命令行、文章文件或日志。
+Windows 脚本停在剪贴板提示后，Agent 将同一运行会话显示在 Codex 可见终端面板。macOS 的启动命令必须收到脚本从 Terminal.app 发出的就绪信号，且用户确实看见独立系统 Terminal 窗口；不能仅凭 `open` 返回成功断言窗口已开，更不能让用户在 Codex 终端面板按 Enter。此时让使用者复制 Key，回到对应的真实终端按 Enter；脚本读取剪贴板，保存到当前平台的安全凭据存储并清空剪贴板。然后从同一插件根目录运行当前平台的 Key 检查及只读 CMS `site/list`；本地 Key 可读不等于网关授权。403 时记录脱敏的接口、状态、`code`、`msg`、`request_id`，核对实际请求与 Mac 网络出口，不能未经排查就说 Key 无权限或要求重存。不要让使用者把 Key 粘贴进终端、发到聊天、写进命令行、文章文件或日志。
 
 仅 Windows：如果 Agent 已确认使用者提前复制完 Key，且要通过非交互终端自动执行，则使用：
 

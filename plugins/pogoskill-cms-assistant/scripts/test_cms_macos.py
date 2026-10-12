@@ -1,4 +1,5 @@
 import importlib.util
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -11,6 +12,59 @@ SPEC.loader.exec_module(MODULE)
 
 
 class MacTransportTests(unittest.TestCase):
+    def test_save_key_rejects_integrated_terminal(self):
+        with patch.dict(MODULE.os.environ, {"TERM_PROGRAM": "Codex",
+                                            "POGOSKILL_CMS_TERMINAL_LAUNCH": "1"}):
+            with self.assertRaisesRegex(RuntimeError, "Terminal.app"):
+                MODULE.require_external_terminal()
+
+    def test_external_terminal_signal_required(self):
+        with tempfile.TemporaryDirectory() as temp:
+            observed = {}
+            def launch(command, **_kwargs):
+                launcher = Path(command[3])
+                observed["content"] = launcher.read_text(encoding="utf-8")
+                launcher.with_suffix(".ready").write_text("Apple_Terminal", encoding="utf-8")
+                return subprocess.CompletedProcess(command, 0)
+            with patch.object(MODULE, "require_macos"), patch.object(
+                    MODULE.subprocess, "run", side_effect=launch):
+                MODULE.open_save_key_terminal(temp)
+            self.assertIn("TERM_PROGRAM", observed["content"])
+            self.assertNotIn("X-API-KEY", observed["content"])
+            self.assertEqual(list(Path(temp).iterdir()), [])
+        with tempfile.TemporaryDirectory() as temp:
+            with patch.object(MODULE, "require_macos"), patch.object(
+                    MODULE.subprocess, "run", return_value=subprocess.CompletedProcess([], 0)), patch.object(
+                    MODULE, "wait_for_external_terminal", return_value=False):
+                with self.assertRaisesRegex(RuntimeError, "did not start the key prompt"):
+                    MODULE.open_save_key_terminal(temp)
+
+    def test_403_reports_request_id_but_never_key(self):
+        summary = MODULE.http_error_summary(403, "/cms/site/list",
+            b'{"code":403,"msg":"key secret-key denied"}', "secret-key",
+            b"X-Request-ID: gateway-42\r\n")
+        self.assertIn("status=403", summary)
+        self.assertIn("gateway-42", summary)
+        self.assertNotIn("secret-key", summary)
+
+    def test_curl_transport_keeps_key_out_of_argv_and_files(self):
+        key = "AFS1727-0001-example-valid-key"
+        seen = {}
+        def run(command, **kwargs):
+            seen["argv"] = command
+            seen["stdin"] = kwargs["input"]
+            Path(command[command.index("--output") + 1]).write_bytes(b'{"code":0,"request_id":"ok"}')
+            Path(command[command.index("--dump-header") + 1]).write_bytes(b"HTTP/2 200\r\n")
+            seen["body"] = Path(command[command.index("--data-binary") + 1][1:]).read_bytes()
+            return subprocess.CompletedProcess(command, 0, stdout="200", stderr="")
+        with patch.object(MODULE.shutil, "which", return_value="/usr/bin/curl"), patch.object(
+                MODULE.subprocess, "run", side_effect=run):
+            result = MODULE.cms_post("/cms/site/list", b"{}", api_key=key)
+        self.assertEqual(result["request_id"], "ok")
+        self.assertEqual(seen["body"], b"{}")
+        self.assertNotIn(key, " ".join(seen["argv"]))
+        self.assertIn(key, seen["stdin"])
+
     def test_multipart_contains_files_and_no_key(self):
         with tempfile.TemporaryDirectory() as temp:
             file = Path(temp) / "article-image.jpg"

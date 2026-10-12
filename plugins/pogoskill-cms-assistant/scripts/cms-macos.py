@@ -11,12 +11,16 @@ import importlib.util
 import io
 import json
 import mimetypes
+import os
 import re
 import secrets
+import shlex
+import shutil
 import subprocess
 import sys
+import tempfile
+import time
 from pathlib import Path
-from urllib import error, request
 
 
 SERVICE = b"TenorshareCMS/OpenAPI"
@@ -105,6 +109,68 @@ def save_key(key, api=None, core=None):
         raise RuntimeError(f"macOS Keychain save failed, status={status}")
 
 
+def save_key_terminal_script(python_executable, cms_script, ready_file):
+    """Generate a no-secret launcher for the separate macOS Terminal.app."""
+    command = f"{shlex.quote(str(python_executable))} {shlex.quote(str(cms_script))} save-key"
+    return ("#!/bin/zsh\n"
+            "if [ \"$TERM_PROGRAM\" != Apple_Terminal ]; then\n"
+            "  printf '此脚本必须在 macOS Terminal.app 中运行。\\n'\n"
+            "  exit 1\n"
+            "fi\n"
+            "export POGOSKILL_CMS_TERMINAL_LAUNCH=1\n"
+            f"printf 'Apple_Terminal' > {shlex.quote(str(ready_file))}\n"
+            f"{command}\n"
+            "status=$?\n"
+            "if [ $status -eq 0 ]; then\n"
+            "  printf '\\nKey 已保存。回到 Codex，让 AI 验证 CMS 连接。\\n'\n"
+            "else\n"
+            "  printf '\\n保存失败。回到 Codex，告诉 AI 这个窗口显示的错误。\\n'\n"
+            "fi\n"
+            "printf '按 Enter 关闭这个 Terminal 窗口：'\n"
+            "read -r\n"
+            "exit $status\n")
+
+
+def wait_for_external_terminal(ready_file, timeout_seconds=20):
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        if ready_file.exists() and ready_file.read_text(encoding="utf-8") == "Apple_Terminal":
+            return True
+        time.sleep(0.25)
+    return False
+
+
+def open_save_key_terminal(launcher_dir=None):
+    """Launch Terminal.app and require its script to signal readiness."""
+    require_macos()
+    fd, launcher_name = tempfile.mkstemp(prefix="pogoskill-cms-key-", suffix=".command",
+                                         dir=launcher_dir)
+    launcher = Path(launcher_name)
+    ready_file = launcher.with_suffix(".ready")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(save_key_terminal_script(sys.executable, Path(__file__).resolve(), ready_file))
+        launcher.chmod(0o700)
+        completed = subprocess.run(["open", "-a", "Terminal", str(launcher)],
+                                   capture_output=True, text=True, check=False)
+        if completed.returncode != 0:
+            raise RuntimeError(f"Could not open macOS Terminal.app: {completed.stderr.strip()}")
+        if not wait_for_external_terminal(ready_file):
+            raise RuntimeError("macOS Terminal.app did not start the key prompt within 20 seconds; "
+                               "do not use the Codex integrated terminal as a substitute")
+    finally:
+        launcher.unlink(missing_ok=True)
+        ready_file.unlink(missing_ok=True)
+    print("已确认脚本在 macOS Terminal.app 中启动。请确认你看见独立系统窗口；"
+          "复制 Key 后只在该窗口按 Enter。")
+
+
+def require_external_terminal():
+    if (os.environ.get("TERM_PROGRAM") != "Apple_Terminal"
+            or os.environ.get("POGOSKILL_CMS_TERMINAL_LAUNCH") != "1"):
+        raise RuntimeError("save-key must run in macOS Terminal.app; use open-save-key-terminal first")
+
+
 def checked_response(raw, endpoint):
     try:
         result = json.loads(raw)
@@ -120,21 +186,59 @@ def checked_response(raw, endpoint):
     return result
 
 
+def http_error_summary(status, endpoint, raw, key, headers=b""):
+    """Preserve safe gateway evidence without printing the credential or raw body."""
+    request_id = None
+    for line in headers.decode("iso-8859-1", errors="replace").splitlines():
+        if line.lower().startswith("x-request-id:"):
+            request_id = line.split(":", 1)[1].strip()
+    result = None
+    try:
+        result = json.loads(raw[:4096])
+    except (UnicodeDecodeError, ValueError):
+        pass
+    parts = [f"CMS HTTP error on {endpoint}: status={status}"]
+    if isinstance(result, dict):
+        if result.get("code") is not None:
+            parts.append(f"code={result['code']}")
+        if result.get("request_id"):
+            request_id = result["request_id"]
+        if result.get("msg"):
+            message = str(result["msg"]).replace(key, "[redacted]")[:200]
+            parts.append(f"msg={message}")
+    if request_id:
+        parts.append(f"request_id={request_id}")
+    return ", ".join(parts).replace(key, "[redacted]")
+
+
 def cms_post(endpoint, body, content_type="application/json; charset=utf-8", api_key=None):
     if not CMS_PATH.fullmatch(endpoint):
         raise ValueError("CMS endpoint must be a /cms/ path")
     key = api_key or read_key()
     if not key:
         raise RuntimeError("CMS API key not found in this user's macOS Keychain")
-    req = request.Request(BASE_URL + endpoint, data=body, method="POST",
-        headers={"X-API-KEY": key, "Accept": "application/json", "Content-Type": content_type})
-    try:
-        with request.urlopen(req, timeout=90) as response:
-            raw = response.read()
-    except error.HTTPError as exc:
-        raise RuntimeError(f"CMS HTTP error on {endpoint}: status={exc.code}") from exc
-    except error.URLError as exc:
-        raise RuntimeError(f"CMS transport error on {endpoint}: {exc.reason}") from exc
+    curl = shutil.which("curl")
+    if not curl:
+        raise RuntimeError("macOS curl was not found")
+    with tempfile.TemporaryDirectory(prefix="pogoskill-cms-post-") as temp:
+        body_path = Path(temp) / "body"
+        response_path = Path(temp) / "response"
+        headers_path = Path(temp) / "headers"
+        body_path.write_bytes(body)
+        command = [curl, "--silent", "--show-error", "--connect-timeout", "20", "--max-time", "90",
+                   "--proto", "=https", "--request", "POST", "--config", "-",
+                   "--header", "Accept: application/json", "--header", f"Content-Type: {content_type}",
+                   "--data-binary", "@" + str(body_path), "--output", str(response_path),
+                   "--dump-header", str(headers_path), "--write-out", "%{http_code}", BASE_URL + endpoint]
+        completed = subprocess.run(command, input=f'header = "X-API-KEY: {key}"\n',
+                                   capture_output=True, text=True, check=False)
+        if completed.returncode != 0:
+            detail = completed.stderr.replace(key, "[redacted]").strip()[:300]
+            raise RuntimeError(f"CMS curl transport error on {endpoint}: exit={completed.returncode}, {detail}")
+        status = completed.stdout.strip()
+        raw = response_path.read_bytes()
+        if status != "200":
+            raise RuntimeError(http_error_summary(status, endpoint, raw, key, headers_path.read_bytes()))
     return checked_response(raw, endpoint)
 
 
@@ -194,6 +298,7 @@ def main():
     parser = argparse.ArgumentParser()
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("check-key")
+    commands.add_parser("open-save-key-terminal")
     commands.add_parser("save-key")
     req = commands.add_parser("request")
     req.add_argument("--path", required=True)
@@ -215,7 +320,10 @@ def main():
         if not read_key():
             raise RuntimeError("No CMS API key in this user's macOS Keychain")
         print("CMS API key is available; value not displayed.")
+    elif args.command == "open-save-key-terminal":
+        open_save_key_terminal()
     elif args.command == "save-key":
+        require_external_terminal()
         print("请现在复制管理员给你的完整 CMS API Key。复制后回到这个窗口，只按 Enter。", flush=True)
         input()
         key = subprocess.run(["pbpaste"], check=True, capture_output=True, text=True).stdout.strip()
