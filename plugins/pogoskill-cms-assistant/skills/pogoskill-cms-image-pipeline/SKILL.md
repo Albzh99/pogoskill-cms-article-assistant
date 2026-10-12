@@ -30,7 +30,7 @@ description: 为 PoGoskill 文章提取真实 JPG/PNG、生成同名 WebP、成�
 6. 上传前用 `/cms/picture/list` 检查目标文件名与完全重复项。若目标目录已经存在同名、同尺寸的 fallback/WebP 对，直接复用并回填，不得再次上传。只有缺少该图片对时才上传；上传后必须验证 `code === 0`、`total === 2`、`err_name_files` 为空、两者尺寸一致，并回查列表。
    对应平台的上传命令必须由当前工具会话直接运行；若返回运行会话 ID，持续轮询直到退出。每张图片后写回 manifest，并把每次 `/picture/upload` 响应保存到文章目录的 `cms-evidence`。缺少汇总时先检查断点证据和 `/picture/list`，不得直接重传。
 7. 上传响应 `data.list[].url` 就是文章应使用的前台正式地址；`data.list[].upload` 只用于 CMS 上传验证，禁止写入正文。优先直接读取 `url`，缺失时用 `/cms/picture/list` 返回的 `online` 核对。脚本只给已验证的公开 URL 追加 `w/h` 尺寸参数。
-8. 对新上传或尚未上云的图片，Windows 运行 `cms-publish-image-resources.ps1 -Execute`；Mac 运行 `python3 scripts/cms-macos-image-pipeline.py publish --manifest <manifest> --execute`。只发布 manifest 中同时具有图片上传 `request_id + publish_id` 的记录；验证成功 ID 完整并等待前台双格式可读，禁止把文章 ID 交给该脚本。
+8. 对新上传或尚未上云的图片，Windows 运行 `cms-publish-image-resources.ps1 -ManifestPath <manifest> -Execute`；Mac 运行 `python3 scripts/cms-macos-image-pipeline.py publish --manifest <manifest> --execute`。只发布 manifest 中同时具有图片上传 `request_id + publish_id` 的记录；验证成功 ID 完整并等待前台双格式可读，禁止把文章 ID 交给该脚本。前台同步默认最多等 5 分钟（可指定 1–600 秒）；脚本定期报告进度。若超时保留 `image_publish_submitted`，Windows 仅运行 `cms-publish-image-resources.ps1 -ManifestPath <manifest> -VerifyOnly`，Mac 仅运行 `python3 scripts/cms-macos-image-pipeline.py verify-public --manifest <manifest>` 续查。验证模式不调用发布 API，也不重复上传；若仍是 404，保留断点并继续等待或排查，不把 404 图片写入文章。
 9. 图片状态为 `image_published` 后，Windows 用 `apply-image-manifest.ps1`；Mac 用 `python3 scripts/cms-macos-image-pipeline.py apply --manifest <manifest> --input-html <草稿HTML> --output-html <新文件>`，按唯一 `image-key` 回填。回填后必须运行插件根目录 `scripts/validate-image-coverage.py`，把 structure、manifest 与最终 HTML 三方对账；只有数量相等且 `pass: true` 才允许保存或更新草稿。写后回读再执行一次；少一张即失败，不生成、不发布文章。
 
 ## 停止条件
@@ -41,5 +41,6 @@ description: 为 PoGoskill 文章提取真实 JPG/PNG、生成同名 WebP、成�
 - CMS 后台 `upload` 验证 URL 无法读取、文件实际解码失败或 `/cms/picture/list` 找不到图片对：停止，不报告图片完成。
 - 上传命令异常中断或没有最终汇总时：读取 manifest 的 `upload_last_checkpoint` / `upload_last_error`、`cms-evidence` 上传响应和 `/cms/picture/list`。已有同名同尺寸图片对时复用；有保存的上传响应时恢复 `request_id` 与 `publish_id`。只有确认 CMS 中不存在该图片对时才允许重试上传。
 - 前台公开 URL 在图片资源发布前返回 404 属于预期状态，不得因此重复上传。应使用原图片上传响应的 `publish_id` 发布图片资源；发布成功并等待前台可读后再回填草稿。
+- 图片资源发布已提交但前台同步超时时，保留 `image_publish_submitted` 与原发布 `request_id`。只用上述验证模式续跑；不得重新调用图片上传或发布接口，也不得仅因为同步延迟报告 Key/权限错误。
 - 正文出现 `site.p.cms.afirstsoft.cn`、`attachment=1`、错误站点域名或带随机哈希的文件名：停止并修正 manifest/HTML。
 - 主图不是 850×460、文件名不具语义、目标目录错误、步骤图与 DOCX 指定名称不对应、竖图过高、Guide 名称无法唯一命中，或任何图片存在同名/完全重复冲突：停止，不写入 CMS。

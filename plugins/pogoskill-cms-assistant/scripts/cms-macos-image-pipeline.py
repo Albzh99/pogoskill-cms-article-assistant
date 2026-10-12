@@ -221,25 +221,34 @@ def upload(manifest_path, site_id, cms_path, cms=None):
     return manifest
 
 
-def publish(manifest_path, cms=None, readable=http_readable, sleep=time.sleep):
-    cms = cms or load_script("cms-macos.py")
+def publish(manifest_path, cms=None, readable=http_readable, sleep=time.sleep,
+            wait_seconds=300, interval=5, clock=time.monotonic, verify_only=False):
+    if not 1 <= wait_seconds <= 600:
+        raise ValueError("wait_seconds must be between 1 and 600")
     manifest = read(manifest_path)
     pending = []
+    changed = False
     for item in manifest["items"]:
         urls = (item.get("fallback_public_url"), item.get("webp_public_url"))
         if not all(urls):
             raise ValueError(f"Missing public URLs: {item['image_key']}")
         if all(map(readable, urls)):
             item["status"] = "image_published"
+            changed = True
         elif item.get("status") == "image_publish_submitted":
             continue
         elif item.get("status") in {"uploaded_pending_publish", "reused_existing"}:
+            if verify_only:
+                raise ValueError(f"Image has no recorded publication: {item['image_key']}; verification mode cannot publish it")
             if not item.get("upload_request_id") or not item.get("publish_id"):
                 raise ValueError(f"Original image upload evidence is missing: {item['image_key']}")
             pending.append(item)
         else:
             raise ValueError(f"Image is not ready to publish: {item['image_key']}")
+    if changed:
+        save(manifest_path, manifest)
     if pending:
+        cms = cms or load_script("cms-macos.py")
         ids = sorted({int(item["publish_id"]) for item in pending})
         result = cms.request_json("/cms/pagepublish/publish", {"ids": ids,
             "description": "Publish CMS image resources only; no article page publication"}, allow_image_publish=True)
@@ -251,18 +260,29 @@ def publish(manifest_path, cms=None, readable=http_readable, sleep=time.sleep):
             item.update(status="image_publish_submitted", image_publish_request_id=result["request_id"],
                         image_publish_submitted_at=now())
         save(manifest_path, manifest)
-    for item in manifest["items"]:
-        if item["status"] != "image_publish_submitted":
-            continue
-        for attempt in range(10):
+    remaining = [item for item in manifest["items"] if item["status"] == "image_publish_submitted"]
+    deadline = clock() + wait_seconds
+    next_progress = clock()
+    while remaining:
+        not_ready = []
+        for item in remaining:
             if readable(item["fallback_public_url"]) and readable(item["webp_public_url"]):
                 item.update(status="image_published", image_public_verified_at=now())
                 save(manifest_path, manifest)
-                break
-            if attempt < 9:
-                sleep(3)
-        else:
-            raise RuntimeError(f"Image published but public URLs not yet readable: {item['image_key']}; retry verification, not publication")
+            else:
+                not_ready.append(item)
+        remaining = not_ready
+        if not remaining:
+            break
+        seconds_left = deadline - clock()
+        if seconds_left <= 0:
+            keys = ", ".join(item["image_key"] for item in remaining)
+            raise RuntimeError(f"Public image URLs still syncing after {wait_seconds}s: {keys}; "
+                               "keep image_publish_submitted and retry verification only")
+        if clock() >= next_progress:
+            print(f"Waiting for public image sync: {len(remaining)} pair(s); no upload or publication retry.", flush=True)
+            next_progress = clock() + 30
+        sleep(min(interval, seconds_left))
     return manifest
 
 
@@ -317,10 +337,13 @@ def main():
     a.add_argument("--article-slug", required=True)
     a = commands.add_parser("convert")
     a.add_argument("--manifest", required=True)
-    for name in ("upload", "publish"):
+    for name in ("upload", "publish", "verify-public"):
         a = commands.add_parser(name)
         a.add_argument("--manifest", required=True)
-        a.add_argument("--execute", action="store_true", required=True)
+        if name != "verify-public":
+            a.add_argument("--execute", action="store_true", required=True)
+        if name in ("publish", "verify-public"):
+            a.add_argument("--max-wait-seconds", type=int, default=300)
         if name == "upload":
             a.add_argument("--site-id", type=int, required=True)
             a.add_argument("--cms-path", required=True)
@@ -338,7 +361,11 @@ def main():
     elif args.command == "upload":
         print(json.dumps({"items": len(upload(args.manifest, args.site_id, args.cms_path)["items"])}, ensure_ascii=False))
     elif args.command == "publish":
-        print(json.dumps({"published_images": sum(i["status"] == "image_published" for i in publish(args.manifest)["items"])}))
+        print(json.dumps({"published_images": sum(i["status"] == "image_published" for i in publish(
+            args.manifest, wait_seconds=args.max_wait_seconds)["items"])}))
+    elif args.command == "verify-public":
+        print(json.dumps({"published_images": sum(i["status"] == "image_published" for i in publish(
+            args.manifest, wait_seconds=args.max_wait_seconds, verify_only=True)["items"])}))
     else:
         print(apply(args.manifest, args.input_html, args.output_html))
 

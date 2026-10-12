@@ -68,7 +68,7 @@
 - 唯一允许传给 `/cms/pagepublish/publish` 的 ID，是当前图片 `/cms/picture/upload` 响应中的 `data.publish_id`。必须同时保留该上传 `request_id` 作为来源证据。
 - 请求使用 `{ "ids": [图片发布记录ID], "description": "...image resources..." }`。成功必须同时满足 `code === 0`、`data.failed = []`，且 `data.success[].id` 完整覆盖请求 IDs。
 - 图片发布与文章发布必须严格区分：禁止传入页面 ID；禁止传入 `/cms/page/make` 产生的文章发布 ID；仍禁止调用 `/cms/page/make`。
-- 发布接口成功后可能异步同步 OSS/S3。最多轮询前台 URL 约 30 秒；尚未可读时保留 `image_publish_submitted` 和发布 `request_id`，之后只重试 URL 验证，不重复发布同一 ID。
+- 发布接口成功后可能异步同步 OSS/S3。默认最多轮询前台 fallback/WebP URL 5 分钟（可设 1–600 秒），定期输出进度；两者均返回 HTTP 200/206 才算可读。尚未可读时保留 `image_publish_submitted` 和发布 `request_id`，之后只重试 URL 验证，不重复上传或发布同一 ID。Windows 使用 `cms-publish-image-resources.ps1 -ManifestPath <manifest> -VerifyOnly`，Mac 使用 `python3 scripts/cms-macos-image-pipeline.py verify-public --manifest <manifest>`；这两个续查模式不调用图片发布 API，也不需要 CMS Key。不能把 404 当作权限失败或图片永久损坏。
 - 已存在且前台可读的图片对直接标记 `image_published`，不重复上传、不重复发布。已存在但 404 的图片对必须从原始 manifest/上传响应恢复 `publish_id`；`picture/list` 本身不能证明发布 ID，禁止拿图片名、页面 ID 或猜测数字代替。
 - fallback 与 WebP 使用同目录、同 basename、同尺寸参数，仅扩展名不同。查询参数写入 HTML 时必须编码为 `&amp;`。
 

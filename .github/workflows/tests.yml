@@ -29,3 +29,4 @@ jobs:
         run: |
           ./plugins/pogoskill-cms-assistant/scripts/test-product-mapping.ps1
           ./plugins/pogoskill-cms-assistant/scripts/test-cms-credential-fallback.ps1
+          ./plugins/pogoskill-cms-assistant/scripts/test-image-publish-resume.ps1

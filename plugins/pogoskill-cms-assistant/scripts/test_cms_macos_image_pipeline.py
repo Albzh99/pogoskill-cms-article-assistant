@@ -115,6 +115,45 @@ class MacImagePipelineTests(unittest.TestCase):
             PIPE.publish(manifest, cms, lambda _: True, lambda _: None)
             self.assertEqual(1, cms.request_json.call_count)
 
+    def test_verify_public_resumes_without_republishing(self):
+        with tempfile.TemporaryDirectory() as temp:
+            manifest = self.fixture(Path(temp))
+            data = PIPE.read(manifest)
+            data["items"][0].update(status="image_publish_submitted", publish_id=42,
+                upload_request_id="upload-uuid", image_publish_request_id="publish-uuid",
+                fallback_public_url="https://tw.pogoskill.com/images/pikmin/a.png",
+                webp_public_url="https://tw.pogoskill.com/images/pikmin/a.webp")
+            PIPE.save(manifest, data)
+            elapsed = [0]
+            def advance(seconds):
+                elapsed[0] += seconds
+            cms = Mock()
+            readable = Mock(side_effect=[False, False, True, True])
+            PIPE.publish(manifest, cms, readable, advance, wait_seconds=30,
+                         clock=lambda: elapsed[0], verify_only=True)
+            self.assertEqual("image_published", PIPE.read(manifest)["items"][0]["status"])
+            self.assertTrue(PIPE.read(manifest)["items"][0]["image_public_verified_at"])
+            cms.request_json.assert_not_called()
+
+    def test_verify_public_timeout_keeps_checkpoint_and_never_publishes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            manifest = self.fixture(Path(temp))
+            data = PIPE.read(manifest)
+            data["items"][0].update(status="image_publish_submitted", publish_id=42,
+                upload_request_id="upload-uuid", image_publish_request_id="publish-uuid",
+                fallback_public_url="https://tw.pogoskill.com/images/pikmin/a.png",
+                webp_public_url="https://tw.pogoskill.com/images/pikmin/a.webp")
+            PIPE.save(manifest, data)
+            elapsed = [0]
+            def advance(seconds):
+                elapsed[0] += seconds
+            cms = Mock()
+            with self.assertRaisesRegex(RuntimeError, "still syncing"):
+                PIPE.publish(manifest, cms, lambda _: False, advance, wait_seconds=10,
+                             clock=lambda: elapsed[0], verify_only=True)
+            self.assertEqual("image_publish_submitted", PIPE.read(manifest)["items"][0]["status"])
+            cms.request_json.assert_not_called()
+
     def test_apply_uses_frontend_urls_and_escapes_ampersands(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

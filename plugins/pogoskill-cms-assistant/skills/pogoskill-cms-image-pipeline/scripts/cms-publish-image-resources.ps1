@@ -1,20 +1,20 @@
 param(
   [Parameter(Mandatory = $true)][string]$ManifestPath,
-  [switch]$Execute
+  [switch]$Execute,
+  [switch]$VerifyOnly,
+  [ValidateRange(1, 600)][int]$MaxWaitSeconds = 300
 )
 
 $ErrorActionPreference = 'Stop'
-if (-not $Execute) { throw 'Dry run only. Re-run with -Execute only for image resource publication; this script never publishes an article page.' }
+if ([bool]$Execute -eq [bool]$VerifyOnly) {
+  throw 'Choose exactly one mode: -Execute may publish image resources; -VerifyOnly only checks existing public URLs.'
+}
 
 $manifestFile = [IO.Path]::GetFullPath($ManifestPath)
 if (-not (Test-Path -LiteralPath $manifestFile -PathType Leaf)) { throw "Manifest not found: $manifestFile" }
 $manifest = Get-Content -LiteralPath $manifestFile -Raw -Encoding UTF8 | ConvertFrom-Json
 
-$credentialScript = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\scripts\CmsCredential.ps1'))
-if (-not (Test-Path -LiteralPath $credentialScript -PathType Leaf)) { throw 'Plugin credential helper was not found.' }
-. $credentialScript
-$apiKey = Get-CmsStoredApiKey
-if ([string]::IsNullOrWhiteSpace($apiKey)) { throw 'Stored CMS credential not found.' }
+$apiKey = $null
 $curlCommand = Get-Command curl.exe -ErrorAction SilentlyContinue | Select-Object -First 1
 $curl = if ($curlCommand) { $curlCommand.Source } else { 'C:\Windows\System32\curl.exe' }
 if (-not (Test-Path -LiteralPath $curl -PathType Leaf)) { throw 'curl.exe was not found.' }
@@ -67,6 +67,9 @@ try {
     if ($item.status -notin @('uploaded_pending_publish', 'reused_existing')) {
       throw "Image is not ready for image-resource publication: $($item.image_key), status=$($item.status)"
     }
+    if ($VerifyOnly) {
+      throw "Image has no recorded publication and is not publicly readable: $($item.image_key). Verification mode will not publish it."
+    }
     if ([int]$item.publish_id -le 0 -or [string]::IsNullOrWhiteSpace([string]$item.upload_request_id)) {
       throw "Image publish_id/upload evidence is missing for $($item.image_key). Recover the original picture/upload response; never use an article page ID."
     }
@@ -74,6 +77,11 @@ try {
   }
 
   if ($publishItems.Count -gt 0) {
+    $credentialScript = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\scripts\CmsCredential.ps1'))
+    if (-not (Test-Path -LiteralPath $credentialScript -PathType Leaf)) { throw 'Plugin credential helper was not found.' }
+    . $credentialScript
+    $apiKey = Get-CmsStoredApiKey
+    if ([string]::IsNullOrWhiteSpace($apiKey)) { throw 'Stored CMS credential not found.' }
     $ids = @($publishItems | ForEach-Object { [int]$_.publish_id } | Select-Object -Unique)
     $publishResponse = Invoke-CmsJson '/cms/pagepublish/publish' @{
       ids = $ids
@@ -97,18 +105,33 @@ try {
     Save-Manifest
   }
 
-  foreach ($item in $submittedItems) {
-    $readable = $false
-    for ($attempt = 1; $attempt -le 10; $attempt++) {
-      if (Test-PublicPair $item) { $readable = $true; break }
-      if ($attempt -lt 10) { Start-Sleep -Seconds 3 }
+  $remaining = @($submittedItems)
+  $deadline = [DateTimeOffset]::UtcNow.AddSeconds($MaxWaitSeconds)
+  $lastProgress = [DateTimeOffset]::MinValue
+  while ($remaining.Count -gt 0) {
+    $notReady = @()
+    foreach ($item in $remaining) {
+      if (Test-PublicPair $item) {
+        $item | Add-Member -NotePropertyName image_public_verified_at -NotePropertyValue ([DateTimeOffset]::Now.ToString('o')) -Force
+        $item.status = 'image_published'
+        Save-Manifest
+      }
+      else { $notReady += $item }
     }
-    if (-not $readable) {
+    $remaining = @($notReady)
+    if ($remaining.Count -eq 0) { break }
+    $now = [DateTimeOffset]::UtcNow
+    if ($now -ge $deadline) {
       Save-Manifest
-      throw "Image publish succeeded but public URLs are not readable yet for $($item.image_key). Do not publish the same ID again; retry only this verification step."
+      $keys = ($remaining | ForEach-Object image_key) -join ', '
+      throw "Public image URLs are still syncing after ${MaxWaitSeconds}s: $keys. Keep image_publish_submitted; retry with -VerifyOnly. Do not upload or publish the IDs again."
     }
-    $item | Add-Member -NotePropertyName image_public_verified_at -NotePropertyValue ([DateTimeOffset]::Now.ToString('o')) -Force
-    $item.status = 'image_published'
+    if (($now - $lastProgress).TotalSeconds -ge 30) {
+      Write-Host "Waiting for public image sync: $($remaining.Count) pair(s) pending; no upload or publication retry."
+      $lastProgress = $now
+    }
+    $secondsLeft = [Math]::Ceiling(($deadline - $now).TotalSeconds)
+    Start-Sleep -Seconds ([Math]::Min(5, [Math]::Max(1, $secondsLeft)))
   }
 
   $manifest | Add-Member -NotePropertyName image_resources_checked_at -NotePropertyValue ([DateTimeOffset]::Now.ToString('o')) -Force
