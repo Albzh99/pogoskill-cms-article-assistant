@@ -267,6 +267,9 @@ def validate(html_text, assets_dir=None, profile="tw"):
         errors.append("duplicate section ids")
     if set(parser.sections) != set(parser.toc_hrefs) or len(parser.sections) != len(parser.toc_hrefs):
         errors.append("TOC href values must match section ids exactly")
+    toc_start = re.search(r'<ul\b[^>]*class="[^"]*\bnav-list1\b[^"]*"', html_text, re.I)
+    if toc_start and not re.search(r'<p\b', html_text[:toc_start.start()], re.I):
+        errors.append("article introduction must appear before the TOC")
     if section_openings:
         conclusion = section_openings[-1]
         homepage = (
@@ -288,6 +291,12 @@ def validate(html_text, assets_dir=None, profile="tw"):
             after_link = conclusion[homepage_link.end():]
             if not re.search(r"\bPoGoskill\b", after_link):
                 errors.append("Conclusion must keep PoGoskill as plain text after the keyword link")
+        for section in section_openings[:-1]:
+            for match in re.finditer(r'<a\b[^>]*>.*?</a>', section, re.I | re.S):
+                if attr(match.group(0), "href") == homepage:
+                    anchor_text = re.sub(r'<[^>]+>', '', match.group(0)).strip()
+                    if anchor_text.lower() != 'pogoskill':
+                        errors.append("keyword homepage link belongs only in the final Conclusion section")
     approved_h3 = {"h3-triangle"} if profile == "tw" else {
         "h3-triangle", "h3-orange-local", "h3-red-local", "h3-num"
     }
@@ -491,6 +500,17 @@ def validate(html_text, assets_dir=None, profile="tw"):
         if "justify-content:center" not in style:
             errors.append(f"article CTA #{index} desktop button group must be centered")
     if has_steps:
+        steps_in_same_section = any(
+            re.search(r'<h[34]\b[^>]*>[^<]*PoGoskill 操作步驟[^<]*</h[34]>', section, re.I)
+            and re.search(r'class="[^"]*\bstep-cont\b', section, re.I)
+            for section in section_openings
+        ) if profile == "tw" else any(
+            re.search(r'<h[34]\b[^>]*>[^<]*how to[^<]*PoGoskill[^<]*</h[34]>', section, re.I)
+            and re.search(r'class="[^"]*\bstep-cont\b', section, re.I)
+            for section in section_openings
+        )
+        if not steps_in_same_section:
+            errors.append("PoGoskill steps heading and step-cont must stay in the same section")
         if cta_count < 1:
             errors.append(f"the main article CTA is required when PoGoskill steps exist, got {cta_count}")
         secure_btn_count = len(re.findall(r'class="secure-btn(?:\s|\")', before_buybox, re.I))
@@ -535,6 +555,18 @@ def validate(html_text, assets_dir=None, profile="tw"):
             continue
         source = source_match.group(0)
         image = img_match.group(0)
+        if not {"lozad", "img-fluid"}.issubset(set(attr(source, "class").split())) or not {
+            "lozad", "img-fluid"
+        }.issubset(set(attr(image, "class").split())):
+            errors.append(f"picture #{index} must keep the site's lozad img-fluid classes")
+        if not attr(source, "data-srcset") or not attr(image, "data-src"):
+            errors.append(f"picture #{index} must use data-srcset and data-src")
+        expected_loading = (
+            "https://tw.pogoskill.com/images/loading.svg" if profile == "tw"
+            else "https://images.pogoskill.com/loading.svg"
+        )
+        if attr(source, "srcset") != expected_loading or attr(image, "src") != expected_loading:
+            errors.append(f"picture #{index} must keep the site's loading.svg lazy-load placeholder")
         webp_url = attr(source, "data-srcset") or attr(source, "srcset")
         fallback_url = attr(image, "data-src") or attr(image, "src")
         combined_urls = f"{webp_url} {fallback_url}".lower()

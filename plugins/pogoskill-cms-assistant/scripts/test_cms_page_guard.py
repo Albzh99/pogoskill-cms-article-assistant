@@ -1,4 +1,8 @@
 import importlib.util
+import json
+import subprocess
+import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -41,6 +45,25 @@ class PageGuardTests(unittest.TestCase):
         self.payload["url"] = "game-app/article.html"
         self.assertTrue(any("selected classification directory" in error for error in
                             GUARD.classification_errors(self.payload, self.categories)))
+
+    def test_readback_numeric_ids_may_be_strings(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            payload_path = root / "payload.json"
+            categories_path = root / "categories.json"
+            info_path = root / "info.json"
+            payload_path.write_text(json.dumps(self.payload), encoding="utf-8")
+            categories_path.write_text(json.dumps(self.categories), encoding="utf-8")
+            info = {"code": 0, "request_id": "readback-id", "data": {
+                **self.payload, "site_id": "324", "classify_id": "18939",
+                "classify_page_id": "465737"}}
+            info_path.write_text(json.dumps(info), encoding="utf-8")
+            result = subprocess.run([
+                sys.executable, str(Path(__file__).with_name("cms-page-guard.py")),
+                str(payload_path), "--classify-response", str(categories_path),
+                "--page-info", str(info_path),
+            ], capture_output=True, text=True)
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
 
 if __name__ == "__main__":

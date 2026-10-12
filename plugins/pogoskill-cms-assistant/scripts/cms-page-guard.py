@@ -85,7 +85,11 @@ def main():
             for key in ("site_id", "classify_id", "classify_page_id", "url", "content"):
                 if key == "classify_id" and payload.get(key) in (None, "", 0):
                     continue
-                if page.get(key) != payload.get(key):
+                if key in ("site_id", "classify_id", "classify_page_id"):
+                    equal = str(page.get(key)) == str(payload.get(key))
+                else:
+                    equal = page.get(key) == payload.get(key)
+                if not equal:
                     errors.append(f"page/info {key} differs from submitted draft")
             errors.extend(readable_html_errors(page.get("content")))
     print(json.dumps({"ok": not errors, "errors": errors}, ensure_ascii=False, indent=2))

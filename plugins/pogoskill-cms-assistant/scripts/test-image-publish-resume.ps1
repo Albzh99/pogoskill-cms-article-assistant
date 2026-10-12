@@ -36,6 +36,7 @@ try {
   catch {
     if ($_.Exception.Message -notmatch 'Verification mode will not publish') { throw }
   }
+  if ($LASTEXITCODE -ne 0) { throw 'Expected CDN transport failures must not leak a native exit code into CI.' }
   Write-Output 'Image verification resume tests passed.'
 }
 finally {

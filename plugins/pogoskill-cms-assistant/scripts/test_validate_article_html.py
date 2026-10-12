@@ -161,6 +161,30 @@ class ValidatorTests(unittest.TestCase):
     def test_valid_contract_passes(self):
         self.assertTrue(VALIDATOR.validate(sample_html(), PUBLISHER / "assets")["ok"])
 
+    def test_missing_introduction_before_toc_is_blocked(self):
+        broken = sample_html().replace('<p>完整導語。</p>', '', 1)
+        result = VALIDATOR.validate(broken, PUBLISHER / "assets")
+        self.assertTrue(any('introduction must appear before the TOC' in error for error in result['errors']))
+
+    def test_steps_cannot_move_to_conclusion(self):
+        step_list = '<ul class="step-cont"><li><p><span>步驟 1</span><label><strong>連接手機：</strong>操作。</label></p></li></ul>'
+        broken = sample_html().replace(step_list, '', 1)
+        broken = broken.replace('<section id="part3">\n  <h2>結語</h2>',
+                                '<section id="part3">\n  <h2>結語</h2>\n  ' + step_list, 1)
+        result = VALIDATOR.validate(broken, PUBLISHER / "assets")
+        self.assertTrue(any('same section' in error for error in result['errors']))
+
+    def test_keyword_homepage_link_cannot_repeat_in_body(self):
+        broken = sample_html().replace('<p>完整內容。</p>',
+            '<p>完整內容。</p>\n  <p><a href="https://tw.pogoskill.com/">最佳飛人工具</a> PoGoskill。</p>', 1)
+        result = VALIDATOR.validate(broken, PUBLISHER / "assets")
+        self.assertTrue(any('belongs only in the final Conclusion' in error for error in result['errors']))
+
+    def test_picture_requires_existing_lazy_load_structure(self):
+        broken = sample_html().replace('class="lozad img-fluid"', '', 2)
+        result = VALIDATOR.validate(broken, PUBLISHER / "assets")
+        self.assertTrue(any('lozad img-fluid' in error for error in result['errors']))
+
     def test_valid_paired_image_layout_passes(self):
         result = VALIDATOR.validate(sample_html_with_paired_images(), PUBLISHER / "assets")
         self.assertTrue(result["ok"], result["errors"])

@@ -41,8 +41,17 @@ function Invoke-CmsJson([string]$Path, [hashtable]$Body) {
 
 function Test-PublicUrl([string]$Url) {
   if ([string]::IsNullOrWhiteSpace($Url) -or $Url -notmatch '^https://') { return $false }
-  $status = & $curl -k -sS -L --range '0-0' -o NUL -w '%{http_code}' --connect-timeout 10 --max-time 30 $Url
-  return ($LASTEXITCODE -eq 0 -and $status -in @('200', '206'))
+  try {
+    $status = & $curl -k -sS -L --range '0-0' -o NUL -w '%{http_code}' --connect-timeout 10 --max-time 30 $Url 2>$null
+    $curlExit = $LASTEXITCODE
+  }
+  catch {
+    # A CDN 404 or transient transport failure is a pending image, not a script failure.
+    $global:LASTEXITCODE = 0
+    return $false
+  }
+  $global:LASTEXITCODE = 0
+  return ($curlExit -eq 0 -and $status -in @('200', '206'))
 }
 
 function Test-PublicPair([object]$Item) {
