@@ -161,8 +161,8 @@ def open_save_key_terminal(launcher_dir=None):
     finally:
         launcher.unlink(missing_ok=True)
         ready_file.unlink(missing_ok=True)
-    print("已确认脚本在 macOS Terminal.app 中启动。请确认你看见独立系统窗口；"
-          "复制 Key 后只在该窗口按 Enter。")
+    print("Terminal.app key prompt started. Confirm the separate macOS window is visible; "
+          "copy the key, then press Enter in that window only.")
 
 
 def require_external_terminal():
