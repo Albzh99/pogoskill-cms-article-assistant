@@ -26,7 +26,7 @@ class PreflightTests(unittest.TestCase):
 
     def test_identity_points_to_current_plugin(self):
         identity = MODULE.plugin_identity()
-        self.assertEqual("1.0.1+codex.20261014keychain2", identity["plugin_version"])
+        self.assertEqual("1.0.2+codex.20261014keychain3", identity["plugin_version"])
         self.assertTrue(identity["cms_script"].endswith("cms-macos.py"))
 
     def test_accepts_real_shape(self):

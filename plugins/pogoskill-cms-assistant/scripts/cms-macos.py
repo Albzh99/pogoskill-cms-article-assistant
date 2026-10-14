@@ -135,7 +135,7 @@ def save_key(key, api=None, core=None):
         raise RuntimeError(f"macOS Keychain save failed, status={status}")
 
 
-def save_key_terminal_script(python_executable, cms_script, ready_file):
+def save_key_terminal_script(python_executable, cms_script, ready_file, result_file):
     """Generate a no-secret launcher for the separate macOS Terminal.app."""
     command = f"{shlex.quote(str(python_executable))} {shlex.quote(str(cms_script))} save-key"
     return ("#!/bin/zsh\n"
@@ -147,6 +147,7 @@ def save_key_terminal_script(python_executable, cms_script, ready_file):
             f"printf 'Apple_Terminal' > {shlex.quote(str(ready_file))}\n"
             f"{command}\n"
             "status=$?\n"
+            f"printf '%s' \"$status\" > {shlex.quote(str(result_file))}\n"
             "if [ $status -eq 0 ]; then\n"
             "  printf '\\nKey 已保存。回到 Codex，让 AI 验证 CMS 连接。\\n'\n"
             "else\n"
@@ -166,16 +167,35 @@ def wait_for_external_terminal(ready_file, timeout_seconds=20):
     return False
 
 
+def wait_for_save_result(result_file, timeout_seconds=600):
+    """Wait for Terminal to finish saving; the marker contains only an exit code."""
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        if result_file.exists():
+            status = result_file.read_text(encoding="ascii").strip()
+            if status == "0":
+                return
+            if status.isdecimal():
+                raise RuntimeError(f"Terminal.app CMS key save failed, exit={status}; "
+                                   "inspect the visible Terminal error without sharing the key")
+            raise RuntimeError("Terminal.app returned an invalid key-save status")
+        time.sleep(0.25)
+    raise RuntimeError("Terminal.app key save did not finish within 10 minutes; "
+                       "do not assume the key is missing or ask for it again")
+
+
 def open_save_key_terminal(launcher_dir=None):
-    """Launch Terminal.app and require its script to signal readiness."""
+    """Launch Terminal.app, then wait for its no-secret completion signal."""
     require_macos()
     fd, launcher_name = tempfile.mkstemp(prefix="pogoskill-cms-key-", suffix=".command",
                                          dir=launcher_dir)
     launcher = Path(launcher_name)
     ready_file = launcher.with_suffix(".ready")
+    result_file = launcher.with_suffix(".result")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            handle.write(save_key_terminal_script(sys.executable, Path(__file__).resolve(), ready_file))
+            handle.write(save_key_terminal_script(sys.executable, Path(__file__).resolve(), ready_file,
+                                                  result_file))
         launcher.chmod(0o700)
         completed = subprocess.run(["open", "-a", "Terminal", str(launcher)],
                                    capture_output=True, text=True, check=False)
@@ -184,11 +204,14 @@ def open_save_key_terminal(launcher_dir=None):
         if not wait_for_external_terminal(ready_file):
             raise RuntimeError("macOS Terminal.app did not start the key prompt within 20 seconds; "
                                "do not use the Codex integrated terminal as a substitute")
+        print("Terminal.app key prompt started. Copy the key and press Enter in that window; "
+              "waiting for the save result automatically.", flush=True)
+        wait_for_save_result(result_file)
     finally:
         launcher.unlink(missing_ok=True)
         ready_file.unlink(missing_ok=True)
-    print("Terminal.app key prompt started. Confirm the separate macOS window is visible; "
-          "copy the key, then press Enter in that window only.")
+        result_file.unlink(missing_ok=True)
+    print("Terminal.app saved and verified the CMS key; check CMS access next.")
 
 
 def require_external_terminal():

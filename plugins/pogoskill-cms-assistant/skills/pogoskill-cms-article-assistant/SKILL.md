@@ -35,7 +35,7 @@ macOS：
 python3 scripts/cms-macos.py open-save-key-terminal
 ```
 
-Windows 脚本停在剪贴板提示后，Agent 将同一运行会话显示在 Codex 可见终端面板。macOS 的启动命令必须收到脚本从 Terminal.app 发出的就绪信号，且用户确实看见独立系统 Terminal 窗口；不能仅凭 `open` 返回成功断言窗口已开，更不能让用户在 Codex 终端面板按 Enter。此时让使用者复制 Key，回到对应的真实终端按 Enter；脚本读取剪贴板，保存到当前平台的安全凭据存储并清空剪贴板。然后从同一插件根目录运行当前平台的 Key 检查及只读 CMS `site/list`；本地 Key 可读不等于网关授权。403 时记录脱敏的接口、状态、`code`、`msg`、`request_id`，核对实际请求与 Mac 网络出口，不能未经排查就说 Key 无权限或要求重存。不要让使用者把 Key 粘贴进终端、发到聊天、写进命令行、文章文件或日志。
+Windows 脚本停在剪贴板提示后，Agent 将同一运行会话显示在 Codex 可见终端面板。macOS 的启动命令必须收到脚本从 Terminal.app 发出的就绪信号，且用户确实看见独立系统 Terminal 窗口；不能仅凭 `open` 返回成功断言窗口已开，更不能让用户在 Codex 终端面板按 Enter。此时让使用者复制 Key，回到对应的真实终端按 Enter；脚本读取剪贴板，保存到当前平台的安全凭据存储并清空剪贴板。Mac 启动命令会继续等待不含 Key 的保存结果；若工具返回运行会话 ID，持续轮询直至该命令退出，不要提前运行 `check-key`，也不要让用户回聊天补一句“存好了”。收到成功状态后从同一插件根目录运行当前平台的 Key 检查及只读 CMS `site/list`；Codex 受限进程如仍读 Keychain 失败，按工具允许的系统级权限自动重试只读检查，不重新索取 Key。本地 Key 可读不等于网关授权。403 时记录脱敏的接口、状态、`code`、`msg`、`request_id`，核对实际请求与 Mac 网络出口，不能未经排查就说 Key 无权限或要求重存。不要让使用者把 Key 粘贴进终端、发到聊天、写进命令行、文章文件或日志。
 
 仅 Windows：如果 Agent 已确认使用者提前复制完 Key，且要通过非交互终端自动执行，则使用：
 

@@ -13,7 +13,7 @@ SPEC.loader.exec_module(MODULE)
 
 class MacTransportTests(unittest.TestCase):
     def test_version_identifies_current_plugin_without_key(self):
-        self.assertEqual("1.0.1+codex.20261014keychain2", MODULE.plugin_version())
+        self.assertEqual("1.0.2+codex.20261014keychain3", MODULE.plugin_version())
 
     def test_keychain_param_error_uses_security_cli_without_secret_in_argv(self):
         class ParamErrorKeychain:
@@ -49,12 +49,14 @@ class MacTransportTests(unittest.TestCase):
                 launcher = Path(command[3])
                 observed["content"] = launcher.read_text(encoding="utf-8")
                 launcher.with_suffix(".ready").write_text("Apple_Terminal", encoding="utf-8")
+                launcher.with_suffix(".result").write_text("0", encoding="ascii")
                 return subprocess.CompletedProcess(command, 0)
             with patch.object(MODULE, "require_macos"), patch.object(
                     MODULE.subprocess, "run", side_effect=launch), patch("builtins.print") as announcement:
                 MODULE.open_save_key_terminal(temp)
             announcement.call_args.args[0].encode("cp1252")
             self.assertIn("TERM_PROGRAM", observed["content"])
+            self.assertIn(".result", observed["content"])
             self.assertNotIn("X-API-KEY", observed["content"])
             self.assertEqual(list(Path(temp).iterdir()), [])
         with tempfile.TemporaryDirectory() as temp:
@@ -63,6 +65,18 @@ class MacTransportTests(unittest.TestCase):
                     MODULE, "wait_for_external_terminal", return_value=False):
                 with self.assertRaisesRegex(RuntimeError, "did not start the key prompt"):
                     MODULE.open_save_key_terminal(temp)
+
+    def test_terminal_save_result_is_required_before_reporting_success(self):
+        with tempfile.TemporaryDirectory() as temp:
+            result = Path(temp) / "key.result"
+            with patch.object(MODULE.time, "monotonic", side_effect=[0, 2]):
+                with self.assertRaisesRegex(RuntimeError, "did not finish"):
+                    MODULE.wait_for_save_result(result, timeout_seconds=1)
+            result.write_text("1", encoding="ascii")
+            with self.assertRaisesRegex(RuntimeError, "exit=1"):
+                MODULE.wait_for_save_result(result)
+            result.write_text("0", encoding="ascii")
+            MODULE.wait_for_save_result(result)
 
     def test_403_reports_request_id_but_never_key(self):
         summary = MODULE.http_error_summary(403, "/cms/site/list",
