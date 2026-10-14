@@ -14,6 +14,12 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 
 
+def plugin_identity():
+    manifest = HERE.parent / ".codex-plugin" / "plugin.json"
+    return {"plugin_version": json.loads(manifest.read_text(encoding="utf-8"))["version"],
+            "cms_script": str(HERE / "cms-macos.py")}
+
+
 def image_capability():
     try:
         from PIL import features
@@ -38,7 +44,7 @@ def mac_site_list():
     key = module.read_key()
     if not key:
         raise RuntimeError("CMS API key is not saved in this user's macOS Keychain")
-    return module.request_json("/cms/site/list", {})
+    return module.request_json("/cms/site/list", {}, api_key=key)
 
 
 def windows_site_list(powershell=None):
@@ -69,7 +75,8 @@ def check(system=None, powershell=None):
         raise RuntimeError("This plugin currently supports Windows and macOS only")
     if not image_capability():
         raise RuntimeError("Pillow with WebP encoding support is unavailable; image upload workflow is not ready")
-    return {"pass": True, "platform": system, "cms_site_count": validate_site_response(response),
+    return {"pass": True, "platform": system, **plugin_identity(),
+            "cms_site_count": validate_site_response(response),
             "request_id": response["request_id"], "webp_encoder_available": True,
             "key_displayed": False}
 
@@ -81,7 +88,8 @@ def main():
     try:
         result = check(powershell=args.powershell)
     except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as exc:
-        result = {"pass": False, "platform": platform.system(), "error": str(exc), "key_displayed": False}
+        result = {"pass": False, "platform": platform.system(), **plugin_identity(),
+                  "error": str(exc), "key_displayed": False}
     print(json.dumps(result, ensure_ascii=False, indent=2))
     if not result["pass"]:
         sys.exit(1)

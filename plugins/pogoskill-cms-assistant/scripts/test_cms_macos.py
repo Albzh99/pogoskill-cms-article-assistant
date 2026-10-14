@@ -12,6 +12,9 @@ SPEC.loader.exec_module(MODULE)
 
 
 class MacTransportTests(unittest.TestCase):
+    def test_version_identifies_current_plugin_without_key(self):
+        self.assertEqual("1.0.1+codex.20261014keychain2", MODULE.plugin_version())
+
     def test_keychain_param_error_uses_security_cli_without_secret_in_argv(self):
         class ParamErrorKeychain:
             def SecKeychainFindGenericPassword(self, *_args):
@@ -23,6 +26,15 @@ class MacTransportTests(unittest.TestCase):
         self.assertEqual(run.call_args.args[0][:3],
                          ["/usr/bin/security", "find-generic-password", "-w"])
         self.assertNotIn(key, run.call_args.args[0])
+
+    def test_failed_security_fallback_preserves_both_statuses(self):
+        class ParamErrorKeychain:
+            def SecKeychainFindGenericPassword(self, *_args):
+                return -50
+        with patch.object(MODULE, "require_macos"), patch.object(
+                MODULE.subprocess, "run", return_value=subprocess.CompletedProcess([], 44, stdout="")):
+            with self.assertRaisesRegex(RuntimeError, "legacy status=-50, security exit=44"):
+                MODULE.read_key(api=ParamErrorKeychain())
 
     def test_save_key_rejects_integrated_terminal(self):
         with patch.dict(MODULE.os.environ, {"TERM_PROGRAM": "Codex",

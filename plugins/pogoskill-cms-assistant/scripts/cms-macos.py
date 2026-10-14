@@ -37,6 +37,11 @@ def require_macos():
         raise RuntimeError("cms-macos.py requires macOS; Windows uses the existing PowerShell scripts")
 
 
+def plugin_version():
+    manifest = Path(__file__).resolve().parent.parent / ".codex-plugin" / "plugin.json"
+    return json.loads(manifest.read_text(encoding="utf-8"))["version"]
+
+
 def security_framework():
     require_macos()
     api = ctypes.CDLL("/System/Library/Frameworks/Security.framework/Security")
@@ -318,6 +323,7 @@ def main():
     require_macos()
     parser = argparse.ArgumentParser()
     commands = parser.add_subparsers(dest="command", required=True)
+    commands.add_parser("version")
     commands.add_parser("check-key")
     commands.add_parser("open-save-key-terminal")
     commands.add_parser("save-key")
@@ -337,7 +343,9 @@ def main():
     publish.add_argument("--output", required=True)
     publish.add_argument("--execute", action="store_true", required=True)
     args = parser.parse_args()
-    if args.command == "check-key":
+    if args.command == "version":
+        print(f"PoGoskill CMS plugin {plugin_version()} script={Path(__file__).resolve()}")
+    elif args.command == "check-key":
         if not read_key():
             raise RuntimeError("No CMS API key in this user's macOS Keychain")
         print("CMS API key is available; value not displayed.")
