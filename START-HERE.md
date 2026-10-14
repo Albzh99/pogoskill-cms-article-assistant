@@ -9,6 +9,8 @@
 
    Mac 用户也发同一句。助手必须自动识别 macOS，使用 Python＋Keychain；Windows 才使用 PowerShell。Mac 上若出现“运行 `.ps1` / `pwsh` / `.exe`”或让你在 Codex 面板里按 Enter，说明仍在使用旧流程，先按 `SETUP.md` 更新并新建对话，不要继续旧会话。
 
+   **Mac 显示已保存，但 Codex 说找不到 Key？** 不要重新复制，也不要把 Key 发给 AI。让 AI 更新本插件，再用当前插件运行 `check-key` 和只读 `/cms/site/list`。旧 Keychain 接口若返回 `status=-50`，新版会尝试系统 `security` 读取；两个方式都失败时，让 AI 报告脱敏状态码并停止，不能说你“没填 Key”。可直接发：“系统 Terminal 已显示保存并验证成功。请更新 PoGoskill 助手并检查当前插件的 Keychain 与只读 CMS 连接；不要让我重填 Key，只报告脱敏错误。”
+
 3. 上传一篇完整 DOCX，选择下面其中一句发送。PoGoskill 的繁中和英文 V2 规范已内置，不需要提供旧文章 URL、CMS 页面 ID、CSS 或 HTML：
 
    **繁中站**：
